@@ -60,11 +60,14 @@ def batch_eval(dataloader, model, device, mute=True):
         Latent space data (m_samples, d_features)
     '''
     model.eval()
+    model.double()
+
     bsz = dataloader.batch_size
     z_array = np.zeros(
         (len(dataloader.dataset),
-        model.encoder.encoder[11].out_features),
-        dtype=np.float32
+        model.encoder.encoder[23].out_features),
+        #dtype=np.float32
+        dtype=np.float64
     )
 
     # If the model has the "n_clusters" attribute, then the correct
@@ -75,10 +78,12 @@ def batch_eval(dataloader, model, device, mute=True):
         q_array = np.zeros(
             (len(dataloader.dataset),
             model.n_clusters),
-            dtype=np.float32
+            #dtype=np.float32
+            dtype=np.float64
         )
         for b, batch in enumerate(tqdm(dataloader, disable=mute)):
-            _, batch = batch
+            #print(batch)
+            #_, batch = batch
             x = batch.to(device)
             q, _, z = model(x)
             q_array[b * bsz:(b*bsz) + x.size(0), :] = q.detach().cpu().numpy()
@@ -93,6 +98,7 @@ def batch_eval(dataloader, model, device, mute=True):
             x = batch.to(device)
             _, z = model(x)
             z_array[b * bsz:(b*bsz) + x.size(0), :] = z.detach().cpu().numpy()
+            print(z_array)
 
         return z_array
 
@@ -138,11 +144,15 @@ def batch_training(model, dataloader, optimizer, metric, device):
     )
 
     for batch in pbar:
-        _, batch = batch
+        #print(batch)
+        #_, batch = batch
+        batch = batch
         x = batch.to(device)
         optimizer.zero_grad()
 
         with torch.set_grad_enabled(True):
+            #x = x.float()
+            model.double()
             x_rec, _ = model(x)
             loss = metric(x_rec, x)
             loss.backward()
@@ -199,7 +209,7 @@ def batch_validation(model, dataloader, metrics, config):
     )
 
     for batch in pbar:
-        _, batch = batch
+        #_, batch = batch
         x = batch.to(config.device)
         loss = torch.zeros((len(metrics),))
         with torch.no_grad():
@@ -515,11 +525,13 @@ def initialize_clusters(model, dataloader, config, n_clusters=None):
         print('Loading cluster initialization...', end='', flush=True)
         path = os.path.abspath(os.path.join(config.saved_weights, os.pardir))
         path = os.path.join(path, 'GMM', f'n_clusters={n_clusters}')
+
+        print(os.path.join(path, 'labels.npy'))
         labels = np.load(os.path.join(path, 'labels.npy'))[config.index_tra]
         centroids = np.load(os.path.join(path, 'centroids.npy'))
     if config.init == "rand": # Random Initialization (for testing)
         print('Initiating clusters with random points...', end='', flush=True)
-        labels, centroids = np.random.randint(0, n_clusters, (100)), np.random.uniform(size=(n_clusters,9))
+        labels, centroids = np.random.randint(0, n_clusters, (101)), np.random.uniform(size=(n_clusters,9))
     else:
         _, _, z_array = batch_eval(dataloader, model, config.device)
         if config.init == "kmeans":
@@ -596,8 +608,8 @@ def model_prediction(
 
     bsz = dataloader.batch_size
 
-    z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[11].out_features), dtype=np.float32)
-    xr_array = np.zeros((len(dataloader.dataset), 1, 87, 100), dtype=np.float32)
+    z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[23].out_features), dtype=np.float32)
+    xr_array = np.zeros((len(dataloader.dataset), 1, 1200, 2300), dtype=np.float32)
 
     pbar = tqdm(
         dataloader,
@@ -681,12 +693,12 @@ def model_prediction(
                 0,
                 config.show
         )
-        plot_process = threading.Thread(
-            target=plotting.plotter_mp,
-            args=plotargs
-        )
-        plot_process.start()
-        print('complete.')
+        #plot_process = threading.Thread(
+        #    target=plotting.plotter_mp,
+        #    args=plotargs
+        #)
+        #plot_process.start()
+        #print('complete.')
 
     elif config.model == 'AEC':
 
@@ -791,19 +803,19 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
         n_epochs = config.n_epochs
 
 
-        fig = plotting.compare_images(
-            model,
-            0,
-            config,
-            savepath=savepath_run
-        )
-        tb.add_figure(
-            'TrainingProgress',
-            fig,
-            global_step=0,
-            close=True
-        )
-        del fig
+        #fig = plotting.compare_images(
+        #    model,
+        #    0,
+        #    config,
+        #    savepath=savepath_run
+        #)
+        #tb.add_figure(
+        #    'TrainingProgress',
+        #    fig,
+        #    global_step=0,
+        #    close=True
+        #)
+        #del fig
 
         for epoch in range(n_epochs):
 
@@ -817,21 +829,21 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
             model, epoch_tra_mse = batch_training(model, tra_loader, optimizer, metrics[0], device)
             tb.add_scalar('Training MSE', epoch_tra_mse, epoch+1)
 
-            if ((epoch + 1) % 5) == 0 and not (epoch == 0):
-                fig = plotting.compare_images(
-                    model,
-                    epoch + 1,
-                    config,
-                    savepath=savepath_run
-                )
-                tb.add_figure(
-                    'TrainingProgress',
-                    fig,
-                    global_step=epoch+1,
-                    close=True
-                )
-                del fig
-
+            #if ((epoch + 1) % 5) == 0 and not (epoch == 0):
+            #    fig = plotting.compare_images(
+            #        model,
+            #        epoch + 1,
+            #        config,
+            #        savepath=savepath_run
+            #    )
+            #    tb.add_figure(
+            #        'TrainingProgress',
+            #        fig,
+            #        global_step=epoch+1,
+            #        close=True
+            #    )
+            #    del fig
+#
             # ==== Validation Loop: ===========================================
             epoch_val_mse = batch_validation(model, val_loader, metrics, config)[0]
 
@@ -877,30 +889,30 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
             hist_path
         )
 
-        fig = plotting.view_history_AEC(hist_path)
-        fig.savefig(hist_path[:-4] + '.png', dpi=300, facecolor='w')
-        del fig
+        #fig = plotting.view_history_AEC(hist_path)
+        #fig.savefig(hist_path[:-4] + '.png', dpi=300, facecolor='w')
+        #del fig
+#
+        #tb.add_hparams(
+        #    {'Batch Size': batch_size, 'LR': lr},
+        #    {
+        #        'hp/Training MSE': epoch_tra_mse,
+        #        'hp/Validation MSE': epoch_val_mse
+        #    }
+        #)
 
-        tb.add_hparams(
-            {'Batch Size': batch_size, 'LR': lr},
-            {
-                'hp/Training MSE': epoch_tra_mse,
-                'hp/Validation MSE': epoch_val_mse
-            }
-        )
-
-        fig = plotting.compare_images(
-            model,
-            epoch+1,
-            config,
-            savepath=savepath_run
-        )
-        tb.add_figure(
-            'TrainingProgress',
-            fig,
-            global_step=epoch+1,
-            close=True
-        )
+        #fig = plotting.compare_images(
+        #    model,
+        #    epoch+1,
+        #    config,
+        #    savepath=savepath_run
+        #)
+        #tb.add_figure(
+        #    'TrainingProgress',
+        #    fig,
+        #    global_step=epoch+1,
+        #    close=True
+        #)
         fname = os.path.join(savepath_run, 'AEC_Params_Final.pt')
         if config.early_stopping and (finished == True or epoch == n_epochs-1):
             shutil.move(
@@ -949,6 +961,8 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
         savepath_run = config.savepath_run
 
         tra_loader = dataloaders[0]
+
+        model.double()
 
         fignames = [
             'T-SNE',
@@ -1024,12 +1038,12 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
         plotkwargs = {
             'tb': tb
         }
-        plot_process = threading.Thread(
-            target=plotting.plotter_mp,
-            args=plotargs,
-            kwargs=plotkwargs
-        )
-        plot_process.start()
+        #plot_process = threading.Thread(
+        #    target=plotting.plotter_mp,
+        #    args=plotargs,
+        #    kwargs=plotkwargs
+        #)
+        #plot_process.start()
 
         iters = list()
         rec_losses = list()
@@ -1073,7 +1087,7 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
 
             # Iterate over data:
             for batch_num, batch in enumerate(pbar):
-                _, batch = batch
+                #_, batch = batch
                 x = batch.to(device)
                 # Update target distribution, check performance
                 if (batch_num % update_interval == 0) and not \
@@ -1170,12 +1184,12 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
                         config.show
                 )
                 plotkwargs = {'tb': tb}
-                plot_process = threading.Thread(
-                    target=plotting.plotter_mp,
-                    args=plotargs,
-                    kwargs=plotkwargs
-                )
-                plot_process.start()
+                #plot_process = threading.Thread(
+                #    target=plotting.plotter_mp,
+                #    args=plotargs,
+                #    kwargs=plotkwargs
+                #)
+                #plot_process.start()
 
             if finished:
                 break
@@ -1331,6 +1345,6 @@ def tsne(data):
         n_iter=2000,
         verbose=0,
         random_state=2009
-    ).fit_transform(data.astype('float64'))
+    ).fit_transform(data.astype('float32'))
     print('complete.')
     return results
