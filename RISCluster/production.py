@@ -19,36 +19,41 @@ from torch.utils.data import DataLoader, Subset
 
 from RISCluster import models, utils
 from RISCluster.networks import AEC, DEC, init_weights
+from RISCluster.ZarrDataLoader import get_zarr_data
 
 
 def load_data(config):
 
     if config.model == 'AEC' or config.model == 'DEC':
 
-        dataset = utils.SeismicDataset(config.fname_dataset, config.datafiletype)
+        #dataset = utils.SeismicDataset(config.fname_dataset, config.datafiletype)
 
         if config.mode == 'train':
-            index_tra, index_val = config.load_TraVal_index()
-            config.index_tra = index_tra
-            config.index_val = index_val
-            tra_dataset = Subset(dataset, index_tra)
+            #index_tra, index_val = config.load_TraVal_index()
+            #config.index_tra = index_tra
+            #config.index_val = index_val
+            #tra_dataset = Subset(dataset, index_tra)
             if config.model == 'AEC':
-                val_dataset = Subset(dataset, index_val)
+                #val_dataset = Subset(dataset, index_val)
+                tra_dataset, val_dataset = get_zarr_data()
+
             else:
                 val_dataset = np.array([])
-            del dataset
+                tra_dataset = get_zarr_data(split_dataset=False)
 
-            if config.loadmode == 'ram':
-                print("Loading Training Data to Memory:")
-                tra_dataset = utils.dataset_to_RAM(tra_dataset)
-                if config.model == 'AEC' and val_dataset is not None:
-                    print("Loading Validation Data to Memory:")
-                    val_dataset = utils.dataset_to_RAM(val_dataset)
+            #del dataset
+
+            #if config.loadmode == 'ram':
+                #print("Loading Training Data to Memory:")
+                #tra_dataset = utils.dataset_to_RAM(tra_dataset)
+                #if config.model == 'AEC' and val_dataset is not None:
+                    #print("Loading Validation Data to Memory:")
+                    #val_dataset = utils.dataset_to_RAM(val_dataset)
 
             return tra_dataset, val_dataset
 
         elif config.mode == 'predict':
-            return dataset
+            return get_zarr_data(split_dataset=False)
 
     elif config.model == 'GMM':
         fname = os.path.abspath(os.path.join(config.saved_weights, os.pardir))
