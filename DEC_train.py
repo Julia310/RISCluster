@@ -18,7 +18,15 @@ fname_dataset = f"{path_data}/RISData_20210713.h5"
 # Path to save paper-ready figures:
 figure_savepath = f"{path_output}/Figures"
 
+os.makedirs('./Config/', exist_ok=True)
 exp_name = "FullArray"
+
+# Image Sample Indexes for Example Waveforms:
+img_index = [1, 2, 3, 4]
+
+# Generate new sample index for data set?
+genflag = False
+
 universal = {
     'exp_name': exp_name,
     'fname_dataset': fname_dataset,
@@ -26,47 +34,44 @@ universal = {
     'indexpath': os.path.join(path_data, 'TraValIndex_M=50000.pkl'),
     'configpath': path_config
 }
-device_no = 1
-
-batch_size = 64
-LR = 0.001
-
-expserial = 'Exp20210727T192309'
-runserial = f'Run_BatchSz={batch_size}_LR={LR}'
-# exp_path = f"{path_output}/Models/AEC/{expserial}/{runserial}"
-exp_path_AEC = os.path.join(path_output, 'Models', 'AEC', expserial, runserial)
-
-weights_AEC = os.path.join(exp_path_AEC, 'AEC_Params_Final.pt')
-print(weights_AEC)
-
-
+device_no = 'cpu'
+#device = utils.set_device(device_no)
+transform = 'sample_norm_cent'
 
 parameters = {
-    'model': 'DEC',
+    'model': 'AEC',
     'mode': 'train',
-    'n_epochs': 400,
+    'n_epochs': 500,
     'show': False,
     'send_message': False,
-    'transform': 'vec_norm',
+    'early_stopping': True,
+    'patience': 10,
+    'transform': transform,
+    'img_index': str(img_index)[1:-1],
     'tb': True,
     'tbport': 6999,
-    'workers': 4,
+    'workers': 1,
     'loadmode': 'ram',
-    'datafiletype': 'h5',
-    'init': 'load',
-    'update_interval': -1,
-    'saved_weights': weights_AEC
+    'datafiletype': 'h5'
 }
-
 hyperparameters = {
-    'batch_size': '64',
-    'lr': '0.001',
-    'n_clusters': '10',
-    'gamma': '0.001',
-    'tol': 0.003
+    'batch_size': '4, 8, 16',
+    'lr': '0.0001, 0.001, 0.01'
 }
 init_path = utils.config_training(universal, parameters, hyperparameters)
-config_DEC = utils.Configuration(init_path)
-config_DEC.load_config()
-#config_DEC.set_device(device_no)
-config_DEC.show = True
+config_AEC = utils.Configuration(init_path)
+config_AEC.load_config()
+
+
+config_AEC.init_exp_env()
+
+config_AEC.set_device(device_no)
+config_AEC.show = True
+
+#config = utils.Configuration(init_path)
+
+print(os.path.abspath(init_path))
+#print(init_path)
+#/home/julia/RISCluster/Config/init_train.ini
+
+train(config_AEC)
