@@ -34,7 +34,7 @@ universal = {
     'indexpath': os.path.join(path_data, 'TraValIndex_M=50000.pkl'),
     'configpath': path_config
 }
-device_no = 'cpu'
+device_no = 0
 #device = utils.set_device(device_no)
 transform = 'sample_norm_cent'
 
