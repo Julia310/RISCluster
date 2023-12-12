@@ -52,7 +52,7 @@ class ZarrDataset(Dataset):
 
 
     def __len__(self):
-        return self.data.shape[2]  # Adjust according to the dimension representing the number of samples
+        return self.data.shape[1]  # Adjust according to the dimension representing the number of samples
 
     def __getitem__(self, idx):
         sample = self.data[:, :, idx].values
