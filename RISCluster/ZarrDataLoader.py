@@ -55,7 +55,7 @@ class ZarrDataset(Dataset):
         return self.data.shape[1]  # Adjust according to the dimension representing the number of samples
 
     def __getitem__(self, idx):
-        sample = self.data[:, :, idx].values
+        sample = self.data[:, idx, :].values
         if self.transform:
             sample = self.transform(sample)
         return sample
