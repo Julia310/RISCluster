@@ -531,7 +531,7 @@ def initialize_clusters(model, dataloader, config, n_clusters=None):
         centroids = np.load(os.path.join(path, 'centroids.npy'))
     if config.init == "rand": # Random Initialization (for testing)
         print('Initiating clusters with random points...', end='', flush=True)
-        labels, centroids = np.random.randint(0, n_clusters, (101)), np.random.uniform(size=(n_clusters,9))
+        labels, centroids = np.random.randint(0, n_clusters, (2500)), np.random.uniform(size=(n_clusters,9))
     else:
         _, _, z_array = batch_eval(dataloader, model, config.device)
         if config.init == "kmeans":
