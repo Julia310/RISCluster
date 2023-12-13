@@ -1,4 +1,4 @@
-from RISCluster.production import train
+from RISCluster.production import train, predict
 from RISCluster import utils
 import os
 
@@ -49,6 +49,48 @@ runserial = f'Run_BatchSz={batch_size}_LR={LR}'
 exp_path_AEC = os.path.join(path_output, 'Models', 'AEC', expserial, runserial)
 
 weights_AEC = os.path.join(exp_path_AEC, 'AEC_Params_Final.pt')
+
+
+
+
+parameters = {
+    'saved_weights': weights_AEC,
+    'model': 'AEC',
+    'mode': 'predict',
+    'n_epochs': 500,
+    'show': False,
+    'send_message': False,
+    'early_stopping': True,
+    'patience': 10,
+    'transform': transform,
+    'img_index': str(img_index)[1:-1],
+    'tb': True,
+    'tbport': 6999,
+    'workers': 1,
+    'loadmode': 'ram',
+    'datafiletype': 'h5'
+}
+hyperparameters = {
+    'batch_size': '1',
+    'lr': '0.001'
+}
+init_path = utils.config_training(universal, parameters, hyperparameters)
+config_AEC = utils.Configuration(init_path)
+config_AEC.load_config()
+
+config_AEC.init_exp_env()
+
+config_AEC.set_device(device_no)
+config_AEC.show = True
+
+# config = utils.Configuration(init_path)
+
+print(os.path.abspath(init_path))
+
+
+# train(config_AEC)
+predict(config_AEC)
+
 
 
 parameters = {
