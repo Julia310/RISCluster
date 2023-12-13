@@ -450,7 +450,7 @@ class LabelCatalogue(object):
             #samples, frequency bins, time bins, amplitude
             DataSpec = '/4.0/Spectrogram'
             dset = f[DataSpec]
-            X = np.zeros((len(index), 88, 101))
+            X = np.zeros((len(index), 88, 2500))
             for i, index in enumerate(index):
                 dset_arr = dset[index, :, :]
                 X[i] = dset_arr
@@ -997,7 +997,7 @@ def load_images(fname_dataset, index):
         #samples, frequency bins, time bins, amplitude
         DataSpec = '/4.0/Spectrogram'
         dset = f[DataSpec]
-        X = np.zeros((len(index), 88, 101))
+        X = np.zeros((len(index), 88, 2500))
         for i, index in enumerate(index):
             dset_arr = dset[index, :, :]
             X[i] = dset_arr
