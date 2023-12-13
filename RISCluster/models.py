@@ -65,7 +65,7 @@ def batch_eval(dataloader, model, device, mute=True):
     bsz = dataloader.batch_size
     z_array = np.zeros(
         (len(dataloader.dataset),
-        model.encoder.encoder[23].out_features),
+        model.encoder.encoder[17].out_features),
         #dtype=np.float32
         dtype=np.float64
     )
@@ -531,7 +531,7 @@ def initialize_clusters(model, dataloader, config, n_clusters=None):
         centroids = np.load(os.path.join(path, 'centroids.npy'))
     if config.init == "rand": # Random Initialization (for testing)
         print('Initiating clusters with random points...', end='', flush=True)
-        labels, centroids = np.random.randint(0, n_clusters, (2500)), np.random.uniform(size=(n_clusters,9))
+        labels, centroids = np.random.randint(0, n_clusters, (2300)), np.random.uniform(size=(n_clusters,9))
     else:
         _, _, z_array = batch_eval(dataloader, model, config.device)
         if config.init == "kmeans":
@@ -608,7 +608,7 @@ def model_prediction(
 
     bsz = dataloader.batch_size
 
-    z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[23].out_features), dtype=np.float32)
+    z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[17].out_features), dtype=np.float32)
     xr_array = np.zeros((len(dataloader.dataset), 1, 1200, 2300), dtype=np.float32)
 
     pbar = tqdm(
