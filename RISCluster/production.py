@@ -99,6 +99,8 @@ def predict(config):
         metrics,
     )
 
+    model = model.double()  # Convert entire model to double precision
+
     return model
 
 
