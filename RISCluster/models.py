@@ -604,6 +604,7 @@ def model_prediction(
     savepath = config.savepath_exp
 
     model.load_state_dict(torch.load(config.saved_weights, map_location=device))
+    model.double()  # Convert entire model to double precision
     model.eval()
 
     bsz = dataloader.batch_size

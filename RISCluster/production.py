@@ -92,6 +92,8 @@ def predict(config):
 
         model = DEC(config.n_clusters).to(config.device)
 
+    model.double()  # Convert entire model to double precision
+
     models.model_prediction(
         config,
         model,
@@ -99,7 +101,7 @@ def predict(config):
         metrics,
     )
 
-    model = model.double()  # Convert entire model to double precision
+    model.double()  # Convert entire model to double precision
 
     return model
 
