@@ -622,7 +622,7 @@ def model_prediction(
     if config.model == 'DEC':
         q_array = np.zeros((len(dataloader.dataset), n_clusters),dtype=np.float32)
         for b, batch in enumerate(pbar):
-            _, batch = batch
+            #_, batch = batch
             x = batch.to(device)
             q, xr, z = model(x)
             q_array[b * bsz:(b*bsz) + x.size(0), :] = q.detach().cpu().numpy()
@@ -706,7 +706,7 @@ def model_prediction(
         running_size = 0
 
         for b, batch in enumerate(tqdm(dataloader)):
-            _, batch = batch
+            #_, batch = batch
             x = batch.to(device)
             xr, z = model(x)
             loss = metrics[0](xr, x)
