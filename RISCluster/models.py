@@ -610,7 +610,7 @@ def model_prediction(
     bsz = dataloader.batch_size
 
     z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[17].out_features), dtype=np.float32)
-    xr_array = np.zeros((len(dataloader.dataset), 1, 1200, 2300), dtype=np.float32)
+    xr_array = np.zeros((len(dataloader.dataset), 1, 1200, 101), dtype=np.float32)
 
     pbar = tqdm(
         dataloader,
