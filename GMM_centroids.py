@@ -1,4 +1,4 @@
-from RISCluster.production import train, predict
+from RISCluster.production import train, predict, gmm_fit
 from RISCluster import utils
 import os
 
@@ -53,43 +53,43 @@ weights_AEC = os.path.join(exp_path_AEC, 'AEC_Params_Final.pt')
 
 
 
-parameters = {
-    'saved_weights': weights_AEC,
-    'model': 'AEC',
-    'mode': 'predict',
-    'n_epochs': 500,
-    'show': False,
-    'send_message': False,
-    'early_stopping': True,
-    'patience': 10,
-    'transform': transform,
-    'img_index': str(img_index)[1:-1],
-    'tb': True,
-    'tbport': 6999,
-    'workers': 1,
-    'loadmode': 'ram',
-    'datafiletype': 'h5'
-}
-hyperparameters = {
-    'batch_size': '1',
-    'lr': '0.001'
-}
-init_path = utils.config_training(universal, parameters, hyperparameters)
-config_AEC = utils.Configuration(init_path)
-config_AEC.load_config()
+#parameters = {
+#    'saved_weights': weights_AEC,
+#    'model': 'AEC',
+#    'mode': 'predict',
+#    'n_epochs': 500,
+#    'show': False,
+#    'send_message': False,
+#    'early_stopping': True,
+#    'patience': 10,
+#    'transform': transform,
+#    'img_index': str(img_index)[1:-1],
+#    'tb': True,
+#    'tbport': 6999,
+#    'workers': 1,
+#    'loadmode': 'ram',
+#    'datafiletype': 'h5'
+#}
+#hyperparameters = {
+#    'batch_size': '1',
+#    'lr': '0.001'
+#}
+#init_path = utils.config_training(universal, parameters, hyperparameters)
+#config_AEC = utils.Configuration(init_path)
+#config_AEC.load_config()
 
-config_AEC.init_exp_env()
+#config_AEC.init_exp_env()
 
-config_AEC.set_device(device_no)
-config_AEC.show = True
+#config_AEC.set_device(device_no)
+#config_AEC.show = True
 
-# config = utils.Configuration(init_path)
+## config = utils.Configuration(init_path)
 
-print(os.path.abspath(init_path))
+#print(os.path.abspath(init_path))
 
 
-# train(config_AEC)
-predict(config_AEC)
+## train(config_AEC)
+#predict(config_AEC)
 
 
 
@@ -114,4 +114,4 @@ config_GMM = utils.Configuration(init_path)
 config_GMM.load_config()
 config_GMM.set_device(device_no)
 config_GMM.show = True
-train(config_GMM)
+gmm_fit(config_GMM)
