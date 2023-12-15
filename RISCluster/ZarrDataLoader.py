@@ -42,11 +42,6 @@ class ZarrDataset(Dataset):
         self.data = load_data_from_zarr(zarr_path)
         self.transform = transform
 
-    def __init__(self, zarr_path, transform=None):
-        #1907_NEW_1Hz_TRUNC.zarr'
-        self.data = load_data_from_zarr(zarr_path)
-        self.transform = transform
-
 
 
 
