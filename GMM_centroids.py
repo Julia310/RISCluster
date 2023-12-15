@@ -112,6 +112,8 @@ hyperparameters = {
 init_path = utils.config_training(universal, parameters, hyperparameters)
 config_GMM = utils.Configuration(init_path)
 config_GMM.load_config()
+config_GMM.init_exp_env()
+
 config_GMM.set_device(device_no)
 config_GMM.show = True
 gmm_fit(config_GMM)
