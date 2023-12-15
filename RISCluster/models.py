@@ -450,38 +450,38 @@ def gmm_fit(config, z_array, n_clusters):
     np.save(os.path.join(config.savepath_run, 'centroids'), centroids)
     print('complete.')
 
-    print('Performing clustering metrics...', end='', flush=True)
-    x = np.load(config.fname_dataset + '.npy')
-    _, _, _, _, _, _, silh_scores_Z, silh_scores_X, _ = cluster_metrics(
-        config.savepath_run,
-        labels,
-        x,
-        z_array
-    )
-    fig1 = plotting.view_silhscore(
-        silh_scores_Z,
-        labels,
-        n_clusters,
-        config.model,
-        config.show
-    )
-    fig1.savefig(
-        os.path.join(config.savepath_run, 'silh_score_Z.png'),
-        dpi=300,
-        facecolor='w'
-    )
-    fig2 = plotting.view_silhscore(
-        silh_scores_X,
-        labels,
-        n_clusters,
-        config.model,
-        config.show
-    )
-    fig2.savefig(
-        os.path.join(config.savepath_run, 'silh_score_X.png'),
-        dpi=300,
-        facecolor='w'
-    )
+    #print('Performing clustering metrics...', end='', flush=True)
+    #x = np.load(config.fname_dataset + '.npy')
+    #_, _, _, _, _, _, silh_scores_Z, silh_scores_X, _ = cluster_metrics(
+    #    config.savepath_run,
+    #    labels,
+    #    x,
+    #    z_array
+    #)
+    #fig1 = plotting.view_silhscore(
+    #    silh_scores_Z,
+    #    labels,
+    #    n_clusters,
+    #    config.model,
+    #    config.show
+    #)
+    #fig1.savefig(
+    #    os.path.join(config.savepath_run, 'silh_score_Z.png'),
+    #    dpi=300,
+    #    facecolor='w'
+    #)
+    #fig2 = plotting.view_silhscore(
+    #    silh_scores_X,
+    #    labels,
+    #    n_clusters,
+    #    config.model,
+    #    config.show
+    #)
+    #fig2.savefig(
+    #    os.path.join(config.savepath_run, 'silh_score_X.png'),
+    #    dpi=300,
+    #    facecolor='w'
+    #)
 
     tsne_results = tsne(z_array)
     fig3 = plotting.view_TSNE(tsne_results, labels, 'GMM', config.show)
