@@ -1964,7 +1964,7 @@ def view_TSNE(results, labels, title, show=False):
     plt.axis('off')
     leg = plt.legend(loc='center left', bbox_to_anchor=(0.9, 0.75), ncol=1, title="Class", title_fontsize=textsize)
     for lh in leg.legendHandles:
-        lh._legmarker.set_alpha(1)
+        lh._marker.set_alpha(1)
     plt.title(title, fontsize=textsize)
 
     if show:
