@@ -73,17 +73,16 @@ def transform_to_tensor(data):
     return torch.from_numpy(data).float().unsqueeze(0)
 
 
-#def get_zarr_data(batch_size, workers, split_dataset = True):
 def get_zarr_data(split_dataset=True):
     print(os.path.abspath('./1907_NEW_1Hz_TRUNC.zarr'))
 
-    # Example usage
+
     transform_pipeline = transforms.Compose([
         ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
-        ZarrDataset.SpecgramToTensor()
+        ZarrDataset.SpecgramToTensor(),
+        #lambda x: x.double(),
     ])
 
-    #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', transform=transform_pipeline)
 
     chunk_size = 110
     #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', chunk_size, transform=transform_pipeline)
