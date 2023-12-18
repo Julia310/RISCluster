@@ -37,22 +37,31 @@ class ZarrDataset(Dataset):
             X = np.expand_dims(X, axis=0)
             return torch.from_numpy(X)
 
-    def __init__(self, zarr_path, transform=None):
-        #1907_NEW_1Hz_TRUNC.zarr'
-        self.data = load_data_from_zarr(zarr_path)
+
+    def __init__(self, zarr_path, chunk_size, transform=None):
+        self.zarr_array = zarr.open(zarr_path, mode='r')
+        self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
-
-
-
-
+        self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
+        self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  # Number of chunks per sequence
 
     def __len__(self):
-        return self.data.shape[1]  # Adjust according to the dimension representing the number of samples
+        return self.samples_per_sequence * self.num_sequences
 
     def __getitem__(self, idx):
-        sample = self.data[:, idx, :].values
+        sequence_idx = idx // self.samples_per_sequence
+        chunk_idx = idx % self.samples_per_sequence
+
+        # Calculate the start and end indices for the chunk
+        start_idx = chunk_idx * self.chunk_size
+        end_idx = start_idx + self.chunk_size
+
+        # Extract the chunk from the Zarr array
+        sample = self.zarr_array[start_idx:end_idx, sequence_idx, :].astype(np.float32)
+
         if self.transform:
             sample = self.transform(sample)
+
         return sample
 
 def load_data_from_zarr(zarr_path):
@@ -68,16 +77,17 @@ def transform_to_tensor(data):
 def get_zarr_data(split_dataset=True):
     print(os.path.abspath('./1907_NEW_1Hz_TRUNC.zarr'))
 
-
     # Example usage
     transform_pipeline = transforms.Compose([
         ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
         ZarrDataset.SpecgramToTensor()
     ])
 
-    full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', transform=transform_pipeline)
+    #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', transform=transform_pipeline)
 
-    #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', transform=transform_to_tensor)
+    chunk_size = 110
+    full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', chunk_size, transform=transform_pipeline)
+
     if split_dataset:
 
         # Determine the size of the training and test sets
@@ -87,15 +97,9 @@ def get_zarr_data(split_dataset=True):
         # Split the dataset into training and test sets
         train_dataset, test_dataset = random_split(full_dataset, [train_size, test_size])
 
-        # Create dataloaders for the training and test sets
-        #train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-        #test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=workers, pin_memory=True)
 
-
-        #return train_dataloader, test_dataloader
         return train_dataset, test_dataset
     else:
-        #return DataLoader(full_dataset, batch_size=batch_size, shuffle=False, num_workers=workers, pin_memory=True)
         return full_dataset
 
 
