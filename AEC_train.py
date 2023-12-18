@@ -55,7 +55,7 @@ parameters = {
     'datafiletype': 'h5'
 }
 hyperparameters = {
-    'batch_size': '4, 8, 16',
+    'batch_size': '32',
     'lr': '0.0001, 0.001, 0.01'
 }
 init_path = utils.config_training(universal, parameters, hyperparameters)
