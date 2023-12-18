@@ -86,7 +86,8 @@ def get_zarr_data(split_dataset=True):
     #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', transform=transform_pipeline)
 
     chunk_size = 110
-    full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', chunk_size, transform=transform_pipeline)
+    #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', chunk_size, transform=transform_pipeline)
+    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr', chunk_size, transform=transform_pipeline)
 
     if split_dataset:
 
