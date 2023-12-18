@@ -65,9 +65,9 @@ parameters = {
     'tb': True,
     'tbport': 6999,
     'workers': 4,
-    'loadmode': 'ram',
+    #'loadmode': 'ram',
     'datafiletype': 'h5',
-    'init': 'rand',
+    'init': 'load',
     'update_interval': -1,
     'saved_weights': weights_AEC
 }
