@@ -80,7 +80,7 @@ def get_zarr_data(split_dataset=True):
     transform_pipeline = transforms.Compose([
         ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
         ZarrDataset.SpecgramToTensor(),
-        #lambda x: x.double(),
+        lambda x: x.double(),
     ])
 
 
