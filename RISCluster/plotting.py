@@ -1963,8 +1963,11 @@ def view_TSNE(results, labels, title, show=False):
         plt.plot(df[df.Class == df["Class"].cat.categories[j]].x, df[df.Class == df["Class"].cat.categories[j]].y, 'o', alpha=0.2, c=colors[j], ms=6, mec="w", mew=0.5, rasterized=True, label=j+1)
     plt.axis('off')
     leg = plt.legend(loc='center left', bbox_to_anchor=(0.9, 0.75), ncol=1, title="Class", title_fontsize=textsize)
-    for lh in leg.legendHandles:
-        lh._marker.set_alpha(1)
+    # Update legend markers
+    for handle in leg.legendHandles:
+        handle.set_alpha(1)
+        handle.set_marker('o')
+
     plt.title(title, fontsize=textsize)
 
     if show:
