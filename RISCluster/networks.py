@@ -16,23 +16,21 @@ class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 4, kernel_size=3, stride=2, padding=1),  # Output: (4, 600, 51)
+            nn.Conv2d(1, 8, kernel_size=3, stride=2, padding=1),  # Output: (8, 55, 51)
             nn.ReLU(True),
-            nn.Conv2d(4, 8, kernel_size=3, stride=2, padding=1),  # Output: (8, 300, 26)
+            nn.Conv2d(8, 8, kernel_size=3, stride=2, padding=1),  # Output: (8, 28, 26)
             nn.ReLU(True),
-            nn.Conv2d(8, 8, kernel_size=3, stride=2, padding=1),  # Output: (8, 150, 13)
+            nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=(1, 2)),  # Output: (16, 14, 14)
             nn.ReLU(True),
-            nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=1),  # Output: (16, 75, 7)
+            nn.Conv2d(16, 16, kernel_size=3, stride=2, padding=2),  # Output: (16, 8, 8)
             nn.ReLU(True),
-            nn.Conv2d(16, 16, kernel_size=3, stride=2, padding=1),  # Output: (16, 38, 4)
+            nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, 4, 4)
             nn.ReLU(True),
-            nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, 19, 2)
+            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, 2, 2)
             nn.ReLU(True),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, 10, 1)
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, 1, 1)
             nn.ReLU(True),
             nn.Flatten(),
-            nn.Linear(320, 64),  # Adjust the number of input features
-            nn.ReLU(True),
             nn.Linear(64, 9),  # Further reduction
             nn.ReLU(True)
 
@@ -50,32 +48,30 @@ class Decoder(nn.Module):
         self.latent2dec = nn.Sequential(
             nn.Linear(9, 64),  # Further reduction
             nn.ReLU(True),
-            nn.Linear(64, 320),
-            nn.ReLU(True)
         )
         self.decoder = nn.Sequential(
             # [Initial layers to expand the latent vector]
-            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2, output_padding=(0,1), padding=1), # Output: (32, 19, 2)
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (32, 2, 2)
             nn.ReLU(True),
-            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (16, 38, 4)
+            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (32, 4, 4)
             nn.ReLU(True),
-            nn.ConvTranspose2d(16, 16, kernel_size=3, stride=2, padding=1), # Output: (16, 75, 7)
+            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (16, 8, 8)
             nn.ReLU(True),
-            nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, output_padding=(1,0), padding=1),  # Output: (8, 150, 13)
+            nn.ConvTranspose2d(16, 16, kernel_size=3, stride=2, output_padding=1, padding=2),  # Output: (16, 14, 14)
             nn.ReLU(True),
-            nn.ConvTranspose2d(8, 8, kernel_size=3, stride=2, output_padding=1, padding=1),   # Output: (32, 38, 72)
+            nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, output_padding=1, padding=(1, 2)),   # Output: (8, 28, 26)
             nn.ReLU(True),
-            nn.ConvTranspose2d(8, 4, kernel_size=3, stride=2, output_padding=(1,0), padding=1),   # Output: (4, 600, 51)
+            nn.ConvTranspose2d(8, 8, kernel_size=3, stride=2, output_padding=0, padding=1),   # Output: (8, 55, 51)
             nn.ReLU(True),
-            nn.ConvTranspose2d(4, 1, kernel_size=3, stride=2, output_padding=(1, 0), padding=1),    # Output: (16, 150, 288)
+            nn.ConvTranspose2d(8, 1, kernel_size=3, stride=2, output_padding=(1, 0), padding=1),    # Output: (1, 110, 100)
             nn.ReLU(True),
-
+#
         )
 
 
     def forward(self, x):
         x = self.latent2dec(x)
-        x = x.view(-1, 32, 10, 1)  # Reshape to match the output of the last encoder convolutional layer
+        x = x.view(-1, 64, 1, 1)  # Reshape to match the output of the last encoder convolutional layer
         x = self.decoder(x)
         return x
 
