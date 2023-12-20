@@ -12,28 +12,35 @@ import torch.nn as nn
 
 
 # ======== This network is for data of dimension 100x87 (4 s) =================
+class SpatialAttentionModule(nn.Module):
+    def __init__(self):
+        super(SpatialAttentionModule, self).__init__()
+        self.conv = nn.Conv2d(2, 1, kernel_size=7, padding=3, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        x = torch.cat([avg_out, max_out], dim=1)
+        x = self.conv(x)
+        return x * self.sigmoid(x)
+
+
+
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size=3, stride=2, padding=1),  # Output: (8, 55, 51)
+            nn.Conv2d(1, 8, kernel_size=(2, 4), stride=(1, 2), padding=1),
             nn.ReLU(True),
-            nn.Conv2d(8, 8, kernel_size=3, stride=2, padding=1),  # Output: (8, 28, 26)
+            nn.Conv2d(8, 8, kernel_size=(2, 4), stride=(1, 2), padding=1),
             nn.ReLU(True),
-            nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=(1, 2)),  # Output: (16, 14, 14)
+            nn.Conv2d(8, 8, kernel_size=(2, 4), stride=(1, 2), padding=1),
             nn.ReLU(True),
-            nn.Conv2d(16, 16, kernel_size=3, stride=2, padding=2),  # Output: (16, 8, 8)
-            nn.ReLU(True),
-            nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, 4, 4)
-            nn.ReLU(True),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, 2, 2)
-            nn.ReLU(True),
-            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, 1, 1)
-            nn.ReLU(True),
+            SpatialAttentionModule(),
             nn.Flatten(),
-            nn.Linear(64, 9),  # Further reduction
+            nn.Linear(84, 9),
             nn.ReLU(True)
-
         )
 
     def forward(self, x):
@@ -45,33 +52,22 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
-        self.latent2dec = nn.Sequential(
-            nn.Linear(9, 64),  # Further reduction
-            nn.ReLU(True),
-        )
         self.decoder = nn.Sequential(
-            # [Initial layers to expand the latent vector]
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (32, 2, 2)
+            nn.Linear(9, 84),  # Further reduction
             nn.ReLU(True),
-            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (32, 4, 4)
+            nn.Unflatten(1, (1, 7, 12)),
+            nn.ConvTranspose2d(1, 8, kernel_size=7, padding=3, bias=False),
             nn.ReLU(True),
-            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, output_padding=1, padding=1), # Output: (16, 8, 8)
+            nn.ConvTranspose2d(8, 8, kernel_size=(2, 4), stride=(1, 2), padding=1, output_padding=(0,1)),
             nn.ReLU(True),
-            nn.ConvTranspose2d(16, 16, kernel_size=3, stride=2, output_padding=1, padding=2),  # Output: (16, 14, 14)
+            nn.ConvTranspose2d(8, 8, kernel_size=(2, 4), stride=(1, 2), padding=1),
             nn.ReLU(True),
-            nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, output_padding=1, padding=(1, 2)),   # Output: (8, 28, 26)
+            nn.ConvTranspose2d(8, 1, kernel_size=(2, 4), stride=(1, 2), padding=1,  output_padding=(0,1)),
             nn.ReLU(True),
-            nn.ConvTranspose2d(8, 8, kernel_size=3, stride=2, output_padding=0, padding=1),   # Output: (8, 55, 51)
-            nn.ReLU(True),
-            nn.ConvTranspose2d(8, 1, kernel_size=3, stride=2, output_padding=(1, 0), padding=1),    # Output: (1, 110, 100)
-            nn.ReLU(True),
-#
         )
 
 
     def forward(self, x):
-        x = self.latent2dec(x)
-        x = x.view(-1, 64, 1, 1)  # Reshape to match the output of the last encoder convolutional layer
         x = self.decoder(x)
         return x
 
