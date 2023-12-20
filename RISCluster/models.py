@@ -65,7 +65,7 @@ def batch_eval(dataloader, model, device, mute=True):
     bsz = dataloader.batch_size
     z_array = np.zeros(
         (len(dataloader.dataset),
-        model.encoder.encoder[17].out_features),
+        model.encoder.encoder[8].out_features),
         #dtype=np.float32
         dtype=np.float64
     )
@@ -609,8 +609,8 @@ def model_prediction(
 
     bsz = dataloader.batch_size
 
-    z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[17].out_features), dtype=np.float32)
-    xr_array = np.zeros((len(dataloader.dataset), 1, 1200, 101), dtype=np.float32)
+    z_array = np.zeros((len(dataloader.dataset), model.encoder.encoder[8].out_features), dtype=np.float32)
+    xr_array = np.zeros((len(dataloader.dataset), 1, 4, 101), dtype=np.float32)
 
     pbar = tqdm(
         dataloader,
