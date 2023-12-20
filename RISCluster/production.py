@@ -132,7 +132,8 @@ def train(config):
             tra_dataset,
             batch_size=batch_size,
             num_workers=config.workers,
-            pin_memory=True
+            pin_memory=True,  # Set to True if using a GPU
+            prefetch_factor=2
         )
 
         if config.model == "AEC":
@@ -141,7 +142,8 @@ def train(config):
                 val_dataset,
                 batch_size=batch_size,
                 num_workers=config.workers,
-                pin_memory=True
+                pin_memory=True,  # Set to True if using a GPU
+                prefetch_factor=2
             )
             dataloaders = [tra_loader, val_loader]
 
