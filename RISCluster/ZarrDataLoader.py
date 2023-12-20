@@ -10,6 +10,16 @@ from zarr.storage import KVStore
 import numpy as np
 
 
+class ZarrArrayWrapper:
+    def __init__(self, zarr_array):
+        self.zarr_array = zarr_array
+
+    def __getitem__(self, key):
+        if key == '':
+            return self.zarr_array
+        else:
+            raise KeyError
+
 
 class ZarrDataset(Dataset):
     class SpecgramNormalizer(object):
