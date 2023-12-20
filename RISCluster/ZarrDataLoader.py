@@ -42,6 +42,7 @@ class ZarrDataset(Dataset):
         self.zarr_array = zarr.open(zarr_path, mode='r')
         chunk_sizes = {'time': 'auto', 'channel': 'auto', 'frec': 'auto'}
         self.ds = xr.open_zarr(self.zarr_array, chunks=chunk_sizes)
+        self.ds = self.ds.to_dataset(name='variable')
         self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
         #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
@@ -63,8 +64,8 @@ class ZarrDataset(Dataset):
         end_idx = start_idx + self.chunk_size
 
         # Extract the chunk from the Zarr array
-        sample = self.ds[start_idx:end_idx, sequence_idx, :].astype(np.float32)
-
+        subcube = self.ds.isel(dim_0=slice(start_idx, start_idx + 4), dim_1=sequence_idx, dim_2=slice(0, 101)).load()
+        sample = subcube.variable.astype(np.float64)
         if self.transform:
             sample = self.transform(sample)
 
