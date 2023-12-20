@@ -15,7 +15,7 @@ import torch.nn as nn
 class SpatialAttentionModule(nn.Module):
     def __init__(self):
         super(SpatialAttentionModule, self).__init__()
-        self.conv = nn.Conv2d(2, 1, kernel_size=7, padding=3, bias=False)
+        self.conv = nn.Conv2d(2, 1, kernel_size=3, padding=1, bias=False)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -56,7 +56,7 @@ class Decoder(nn.Module):
             nn.Linear(9, 84),  # Further reduction
             nn.ReLU(True),
             nn.Unflatten(1, (1, 7, 12)),
-            nn.ConvTranspose2d(1, 8, kernel_size=7, padding=3, bias=False),
+            nn.ConvTranspose2d(1, 8, kernel_size=3, padding=1, bias=False),
             nn.ReLU(True),
             nn.ConvTranspose2d(8, 8, kernel_size=(2, 4), stride=(1, 2), padding=1, output_padding=(0,1)),
             nn.ReLU(True),
