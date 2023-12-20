@@ -62,10 +62,8 @@ class ZarrDataset(Dataset):
         start_idx = chunk_idx * self.chunk_size // 2
         end_idx = start_idx + self.chunk_size
 
-        subcube = self.ds.isel(dim_0=slice(start_idx, start_idx + 4), dim_1=sequence_idx, dim_2=slice(0, 101)).load()
-
-        # Convert to float32 and apply transformation if any
-        sample = subcube.astype(np.float64)
+        # Extract the chunk from the Zarr array
+        sample = self.ds[start_idx:end_idx, sequence_idx, :].astype(np.float32)
 
         if self.transform:
             sample = self.transform(sample)
