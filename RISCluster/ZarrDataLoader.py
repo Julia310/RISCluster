@@ -6,6 +6,7 @@ from torchvision import transforms
 from torch.utils.data import random_split, Subset
 from torch.utils.data import Dataset
 import os
+from zarr.storage import KVStore
 import numpy as np
 
 
@@ -41,7 +42,7 @@ class ZarrDataset(Dataset):
     def __init__(self, zarr_path, chunk_size, transform=None):
         self.zarr_array = zarr.open(zarr_path, mode='r')
         chunk_sizes = {'time': 'auto', 'channel': 'auto', 'frec': 'auto'}
-        self.ds = xr.open_zarr(self.zarr_array, chunks=chunk_sizes)
+        self.ds = xr.open_zarr(KVStore(self.zarr_array), chunks=chunk_sizes)
         self.ds = self.ds.to_dataset(name='variable')
         self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
