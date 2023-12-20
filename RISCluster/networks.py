@@ -100,9 +100,10 @@ def init_weights(m):
     Outputs:
         - Reconstructed data
     """
-    if type(m) in [nn.Linear, nn.Conv2d, nn.ConvTranspose2d]:
-        torch.nn.init.xavier_uniform_(m.weight)
-        m.bias.data.fill_(0.01)
+    if isinstance(m, (nn.Linear, nn.Conv2d, nn.ConvTranspose2d)):
+        nn.init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            m.bias.data.fill_(0.01)
 
 
 class ClusteringLayer(nn.Module):
