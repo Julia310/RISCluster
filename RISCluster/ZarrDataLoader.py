@@ -46,6 +46,8 @@ class ZarrDataset(Dataset):
         self.num_sequences = 500  # Number of sequences in the second dimension
         #self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  * 2# Number of chunks per sequence
         self.samples_per_sequence = 172740 // chunk_size * 2# Number of chunks per sequence
+        print('samples per sequence', self.samples_per_sequence)
+        print('number of sequences', self.num_sequences)
 
     def __len__(self):
         return self.samples_per_sequence * self.num_sequences
@@ -78,6 +80,7 @@ def get_zarr_data(split_dataset=True):
     chunk_size = 4
     #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', chunk_size, transform=transform_pipeline)
     full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr', chunk_size, transform=transform_pipeline)
+    print('full dataset length: ', len(full_dataset))
 
     if split_dataset:
 
