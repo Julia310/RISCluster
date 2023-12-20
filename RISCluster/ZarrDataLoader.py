@@ -56,7 +56,7 @@ class ZarrDataset(Dataset):
 
         # Calculate the start and end indices for the chunk
         start_idx = chunk_idx * self.chunk_size // 2
-        end_idx = start_idx + self.chunk_size // 2
+        end_idx = start_idx + self.chunk_size
 
         # Extract the chunk from the Zarr array
         sample = self.zarr_array[start_idx:end_idx, sequence_idx, :].astype(np.float32)
