@@ -43,9 +43,9 @@ class ZarrDataset(Dataset):
         self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
         #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
-        self.num_sequences = 500  # Number of sequences in the second dimension
+        self.num_sequences = 100  # Number of sequences in the second dimension
         #self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  * 2# Number of chunks per sequence
-        self.samples_per_sequence = 172740 // chunk_size * 2# Number of chunks per sequence
+        self.samples_per_sequence = self.zarr_array.shape[0] * 2 // (11 * 2 *chunk_size)# Number of chunks per sequence
         print('samples per sequence', self.samples_per_sequence)
         print('number of sequences', self.num_sequences)
 
