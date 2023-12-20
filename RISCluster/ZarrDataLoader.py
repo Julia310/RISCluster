@@ -39,17 +39,16 @@ class ZarrDataset(Dataset):
             return torch.from_numpy(X)
 
     def __init__(self, zarr_path, chunk_size, transform=None):
-        # Open the Zarr array
         zarr_array = zarr.open(zarr_path, mode='r')
+        wrapped_array = ZarrArrayWrapper(zarr_array)
 
-        # Convert the Zarr array to an xarray DataArray
-        data_array = xr.DataArray(zarr_array, dims=['dim_0', 'dim_1', 'dim_2'])
-
-        # Convert the DataArray to a Dataset
-        self.ds = data_array.to_dataset(name='variable')
+        # Use KVStore to wrap the custom class
+        store = KVStore(wrapped_array)
+        self.ds = xr.open_zarr(store, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
 
         self.chunk_size = chunk_size
         self.transform = transform
+        self.num_sequences = 50
         self.num_sequences = 50
         self.samples_per_sequence = zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
 
