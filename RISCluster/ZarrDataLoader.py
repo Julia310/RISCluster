@@ -42,8 +42,10 @@ class ZarrDataset(Dataset):
         self.zarr_array = zarr.open(zarr_path, mode='r')
         self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
-        self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
-        self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  # Number of chunks per sequence
+        #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
+        self.num_sequences = 500  # Number of sequences in the second dimension
+        #self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  * 2# Number of chunks per sequence
+        self.samples_per_sequence = 172740 // chunk_size * 2# Number of chunks per sequence
 
     def __len__(self):
         return self.samples_per_sequence * self.num_sequences
@@ -53,8 +55,8 @@ class ZarrDataset(Dataset):
         chunk_idx = idx % self.samples_per_sequence
 
         # Calculate the start and end indices for the chunk
-        start_idx = chunk_idx * self.chunk_size
-        end_idx = start_idx + self.chunk_size
+        start_idx = chunk_idx * self.chunk_size // 2
+        end_idx = start_idx + self.chunk_size // 2
 
         # Extract the chunk from the Zarr array
         sample = self.zarr_array[start_idx:end_idx, sequence_idx, :].astype(np.float32)
@@ -64,27 +66,16 @@ class ZarrDataset(Dataset):
 
         return sample
 
-def load_data_from_zarr(zarr_path):
-    zarr_array = zarr.open(zarr_path, mode='r')
-    return xr.DataArray(zarr_array)
-
-
-def transform_to_tensor(data):
-    return torch.from_numpy(data).float().unsqueeze(0)
 
 
 def get_zarr_data(split_dataset=True):
-    print(os.path.abspath('./1907_NEW_1Hz_TRUNC.zarr'))
-
-
     transform_pipeline = transforms.Compose([
         ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
         ZarrDataset.SpecgramToTensor(),
         lambda x: x.double(),
     ])
 
-
-    chunk_size = 110
+    chunk_size = 4
     #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', chunk_size, transform=transform_pipeline)
     full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr', chunk_size, transform=transform_pipeline)
 
