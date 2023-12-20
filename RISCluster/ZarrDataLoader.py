@@ -41,7 +41,7 @@ class ZarrDataset(Dataset):
     def __init__(self, zarr_path, chunk_size, transform=None):
         self.zarr_array = zarr.open(zarr_path, mode='r')
         chunk_sizes = {'time': 'auto', 'channel': 'auto', 'frec': 'auto'}
-        self.ds = xr.open_zarr(zarr_path, chunks=chunk_sizes)
+        self.ds = xr.open_zarr(self.zarr_array, chunks=chunk_sizes)
         self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
         #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
