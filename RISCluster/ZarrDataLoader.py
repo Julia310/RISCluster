@@ -43,9 +43,9 @@ class ZarrDataset(Dataset):
         self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
         #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
-        self.num_sequences = 100  # Number of sequences in the second dimension
+        self.num_sequences = 50  # Number of sequences in the second dimension
         #self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  * 2# Number of chunks per sequence
-        self.samples_per_sequence = self.zarr_array.shape[0] * 2 // (11 * 2 *chunk_size)# Number of chunks per sequence
+        self.samples_per_sequence = self.zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)# Number of chunks per sequence
         print('samples per sequence', self.samples_per_sequence)
         print('number of sequences', self.num_sequences)
 
@@ -85,7 +85,7 @@ def get_zarr_data(split_dataset=True):
     if split_dataset:
 
         # Determine the size of the training and test sets
-        train_size = int(0.8 * len(full_dataset))
+        train_size = int(0.7 * len(full_dataset))
         test_size = len(full_dataset) - train_size
 
         # Split the dataset into training and test sets
