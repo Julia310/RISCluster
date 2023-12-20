@@ -38,20 +38,20 @@ class ZarrDataset(Dataset):
             X = np.expand_dims(X, axis=0)
             return torch.from_numpy(X)
 
-
     def __init__(self, zarr_path, chunk_size, transform=None):
-        self.zarr_array = zarr.open(zarr_path, mode='r')
-        chunk_sizes = {'time': 'auto', 'channel': 'auto', 'frec': 'auto'}
-        self.ds = xr.open_zarr(KVStore(self.zarr_array), chunks=chunk_sizes)
-        self.ds = self.ds.to_dataset(name='variable')
-        self.chunk_size = chunk_size  # Size of each chunk in the first dimension
+        # Open the Zarr array
+        zarr_array = zarr.open(zarr_path, mode='r')
+
+        # Convert the Zarr array to an xarray DataArray
+        data_array = xr.DataArray(zarr_array, dims=['dim_0', 'dim_1', 'dim_2'])
+
+        # Convert the DataArray to a Dataset
+        self.ds = data_array.to_dataset(name='variable')
+
+        self.chunk_size = chunk_size
         self.transform = transform
-        #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
-        self.num_sequences = 50  # Number of sequences in the second dimension
-        #self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  * 2# Number of chunks per sequence
-        self.samples_per_sequence = self.zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)# Number of chunks per sequence
-        print('samples per sequence', self.samples_per_sequence)
-        print('number of sequences', self.num_sequences)
+        self.num_sequences = 50
+        self.samples_per_sequence = zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
 
     def __len__(self):
         return self.samples_per_sequence * self.num_sequences
@@ -59,14 +59,15 @@ class ZarrDataset(Dataset):
     def __getitem__(self, idx):
         sequence_idx = idx // self.samples_per_sequence
         chunk_idx = idx % self.samples_per_sequence
-
-        # Calculate the start and end indices for the chunk
         start_idx = chunk_idx * self.chunk_size // 2
         end_idx = start_idx + self.chunk_size
 
-        # Extract the chunk from the Zarr array
-        subcube = self.ds.isel(dim_0=slice(start_idx, start_idx + 4), dim_1=sequence_idx, dim_2=slice(0, 101)).load()
-        sample = subcube.variable.astype(np.float64)
+        # Adjust the slicing to get the subcube of size (4, 1, 101)
+        subcube = self.ds.isel(dim_0=slice(start_idx, start_idx + 4), dim_1=sequence_idx,
+                               dim_2=slice(0, 101)).variable.load()
+
+        # Convert to float64 and apply transformation if any
+        sample = subcube.astype(np.float64)
         if self.transform:
             sample = self.transform(sample)
 
