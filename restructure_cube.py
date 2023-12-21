@@ -1,20 +1,22 @@
 import xarray as xr
+import dask.array as da
+import zarr
 
-# Load the Zarr file
-ds = xr.open_zarr('/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr')
+# Open the Zarr array with Zarr and wrap it with Dask
+zarr_array = zarr.open('/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr', mode='r')
+dask_array = da.from_zarr(zarr_array)
 
-# Suppose your data cube has 3 dimensions and you want to name them 'time', 'lat', 'lon'
-# You can rename the dimensions like this:
-ds = ds.rename({'dim_0': 'time', 'dim_1': 'channel', 'dim_2': 'freq'})
+# Convert the Dask-backed array to an Xarray DataArray, applying chunking in the process
+ds = xr.DataArray(dask_array, dims=['time', 'channel', 'freq'])
 
-ds_chunked = ds.chunk({'time': 60, 'channel': 5, 'freq': 101})
+# Since the array is already chunked by Dask, you don't need to re-chunk it in Xarray
+# However, if you wish to change the chunk sizes, you can do so:
+ds = ds.chunk({'time': 60, 'channel': 5, 'freq': 101})
 
 # Save the chunked and modified dataset back to Zarr
-ds_chunked.to_zarr('/work/users/jp348bcyy/rhoneCubeNeu/modified_Cube.zarr')
+# Save the chunked dataset back to a new Zarr file
+ds.to_zarr('/work/users/jp348bcyy/rhoneCubeNeu/chunked_Cube.zarr', mode='w')
 
-
-# Load the chunked dataset
-ds = xr.open_zarr('/work/users/jp348bcyy/rhoneCubeNeu/modified_Cube.zarr')
 
 # Define a function to calculate chunk boundaries
 def get_chunk_boundaries(dim_size, chunk_size):
