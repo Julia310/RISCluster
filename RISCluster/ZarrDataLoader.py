@@ -39,18 +39,24 @@ class ZarrDataset(Dataset):
             return torch.from_numpy(X)
 
     def __init__(self, zarr_path, chunk_size, transform=None):
-        original_zarr_array = zarr.open(zarr_path, mode='r')
-
-        # Create a new Zarr group
         group_path = zarr_path + '_group'
+        if not os.path.exists(group_path):
+            os.makedirs(group_path)
+
+        # Create or open the Zarr group
         group = zarr.open_group(group_path, mode='w')
 
-        # Move the original array into the new group under a specific name
-        group.array('my_dataset', data=original_zarr_array, chunks=original_zarr_array.chunks)
+        # Load the original Zarr array
+        original_zarr_array = zarr.open(zarr_path, mode='r')
 
-        # Now open the group with xarray
+        # Check if the dataset already exists in the group, if not, create it
+        if 'my_dataset' not in group:
+            group.create_dataset('my_dataset', data=original_zarr_array, chunks=original_zarr_array.chunks)
+
+        # Open the Zarr group with xarray
         self.ds = xr.open_zarr(group_path, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
 
+        # Set other attributes
         self.chunk_size = chunk_size
         self.transform = transform
         self.num_sequences = 50
