@@ -39,28 +39,26 @@ class ZarrDataset(Dataset):
             return torch.from_numpy(X)
 
     def __init__(self, zarr_path, chunk_size, transform=None):
-        group_path = zarr_path + '_group'
-        if not os.path.exists(group_path):
-            os.makedirs(group_path)
+        old_zarr_array = zarr.open(zarr_path, mode='r')
 
-        # Create or open the Zarr group
-        group = zarr.open_group(group_path, mode='w')
+        # Check if the array is already chunked
+        if old_zarr_array.chunks is None:
+            # Create a new chunked Zarr array
+            new_zarr_path = zarr_path + '_chunked'
+            chunks = (64, 1, 101)  # Adjust as needed
+            new_zarr_array = zarr.open(new_zarr_path, mode='w', shape=old_zarr_array.shape, dtype=old_zarr_array.dtype, chunks=chunks)
+            new_zarr_array[:] = old_zarr_array[:]
+            zarr_path = new_zarr_path  # Use the new chunked path
 
-        # Load the original Zarr array
-        original_zarr_array = zarr.open(zarr_path, mode='r')
+        zarr_array = zarr.open(zarr_path, mode='r')
 
-        # Check if the dataset already exists in the group, if not, create it
-        if 'my_dataset' not in group:
-            group.create_dataset('my_dataset', data=original_zarr_array, chunks=original_zarr_array.chunks)
+        # Open the (possibly new) Zarr file with xarray
+        self.ds = xr.open_zarr(zarr_array, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
 
-        # Open the Zarr group with xarray
-        self.ds = xr.open_zarr(group_path, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
-
-        # Set other attributes
         self.chunk_size = chunk_size
         self.transform = transform
         self.num_sequences = 50
-        self.samples_per_sequence = original_zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
+        self.samples_per_sequence = old_zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
 
     def __len__(self):
         return self.samples_per_sequence * self.num_sequences
