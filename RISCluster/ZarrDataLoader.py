@@ -56,7 +56,7 @@ class ZarrDataset(Dataset):
         self.chunk_size = chunk_size
         self.transform = transform
         self.num_sequences = 50
-        self.samples_per_sequence = zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
+        self.samples_per_sequence = old_zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
 
     def __len__(self):
         return self.samples_per_sequence * self.num_sequences
