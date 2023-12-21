@@ -53,7 +53,7 @@ class ZarrDataset(Dataset):
         zarr_array = zarr.open(zarr_path, mode='r')
 
         # Open the (possibly new) Zarr file with xarray
-        self.ds = xr.open_zarr(zarr_array, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
+        self.ds = xr.open_zarr(zarr_array)
 
         self.chunk_size = chunk_size
         self.transform = transform
@@ -69,12 +69,9 @@ class ZarrDataset(Dataset):
         start_idx = chunk_idx * self.chunk_size // 2
         end_idx = start_idx + self.chunk_size
 
-        # Adjust the slicing to get the subcube of size (4, 1, 101)
-        subcube = self.ds.isel(dim_0=slice(start_idx, start_idx + 4), dim_1=sequence_idx,
-                               dim_2=slice(0, 101)).variable.load()
+        # Extract the chunk from the Zarr array
+        sample = self.ds[start_idx:end_idx, sequence_idx, :].astype(np.float64)
 
-        # Convert to float64 and apply transformation if any
-        sample = subcube.astype(np.float64)
         if self.transform:
             sample = self.transform(sample)
 
