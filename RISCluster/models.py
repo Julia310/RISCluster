@@ -146,7 +146,6 @@ def batch_training(model, dataloader, optimizer, metric, device):
     for batch in pbar:
         #print(batch)
         #_, batch = batch
-        print(batch.shape)
         x = batch.to(device)
         optimizer.zero_grad()
 
