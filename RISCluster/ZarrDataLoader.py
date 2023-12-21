@@ -52,11 +52,12 @@ class ZarrDataset(Dataset):
             zarr_path = new_zarr_path  # Use the new chunked path
 
         # Wrap the zarr array in KVStore if it exposes MutableMapping interface
-        zarr_array = zarr.open(zarr_path, mode='r')
+        #zarr_array = zarr.open(zarr_path, mode='r')
         #zarr_array = KVStore(zarr_array.store)
 
         # Open the (possibly new) Zarr file with xarray
-        self.ds = xr.DataArray(zarr_array)
+        zarr_group = zarr.open_group(zarr_path, mode='r')
+        self.ds = xr.open_zarr(zarr_group)
 
         self.chunk_size = chunk_size
         self.transform = transform
