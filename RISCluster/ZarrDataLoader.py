@@ -38,34 +38,17 @@ class ZarrDataset(Dataset):
             X = np.expand_dims(X, axis=0)
             return torch.from_numpy(X)
 
+
     def __init__(self, zarr_path, chunk_size, transform=None):
-        # Open the existing Zarr array
-        old_zarr_array = zarr.open(zarr_path, mode='r')
-
-        # Check if the array is already chunked
-        if old_zarr_array.chunks is None:
-            # Create a new chunked Zarr array
-            new_zarr_path = zarr_path + '_chunked'
-            chunks = (64, 1, 101)  # Adjust as needed
-            new_zarr_array = zarr.open(new_zarr_path, mode='w', shape=old_zarr_array.shape, dtype=old_zarr_array.dtype, chunks=chunks)
-            new_zarr_array[:] = old_zarr_array[:]
-            zarr_path = new_zarr_path  # Use the new chunked path
-
-        # Wrap the zarr array in KVStore if it exposes MutableMapping interface
-        #zarr_array = zarr.open(zarr_path, mode='r')
-        #zarr_array = KVStore(zarr_array.store)
-
-        # Open the (possibly new) Zarr file with xarray
-        zarr_store = zarr.open(zarr_path, mode='r')
-
-        # Use xr.open_dataset for lazy loading
-        # This ensures that data is not loaded into memory all at once
-        self.ds = xr.open_dataset(zarr_store, engine='zarr')
-
-        self.chunk_size = chunk_size
+        self.zarr_array = zarr.open(zarr_path, mode='r')
+        self.chunk_size = chunk_size  # Size of each chunk in the first dimension
         self.transform = transform
-        self.num_sequences = 50
-        self.samples_per_sequence = old_zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
+        #self.num_sequences = self.zarr_array.shape[1]  # Number of sequences in the second dimension
+        self.num_sequences = 50  # Number of sequences in the second dimension
+        #self.samples_per_sequence = self.zarr_array.shape[0] // chunk_size  * 2# Number of chunks per sequence
+        self.samples_per_sequence = self.zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)# Number of chunks per sequence
+        print('samples per sequence', self.samples_per_sequence)
+        print('number of sequences', self.num_sequences)
 
     def __len__(self):
         return self.samples_per_sequence * self.num_sequences
@@ -73,11 +56,13 @@ class ZarrDataset(Dataset):
     def __getitem__(self, idx):
         sequence_idx = idx // self.samples_per_sequence
         chunk_idx = idx % self.samples_per_sequence
+
+        # Calculate the start and end indices for the chunk
         start_idx = chunk_idx * self.chunk_size // 2
         end_idx = start_idx + self.chunk_size
 
         # Extract the chunk from the Zarr array
-        sample = self.ds[start_idx:end_idx, sequence_idx, :].astype(np.float64)
+        sample = self.zarr_array[start_idx:end_idx, sequence_idx, :].astype(np.float64)
 
         if self.transform:
             sample = self.transform(sample)
