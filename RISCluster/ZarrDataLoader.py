@@ -39,6 +39,7 @@ class ZarrDataset(Dataset):
             return torch.from_numpy(X)
 
     def __init__(self, zarr_path, chunk_size, transform=None):
+        # Open the existing Zarr array
         old_zarr_array = zarr.open(zarr_path, mode='r')
 
         # Check if the array is already chunked
@@ -50,7 +51,9 @@ class ZarrDataset(Dataset):
             new_zarr_array[:] = old_zarr_array[:]
             zarr_path = new_zarr_path  # Use the new chunked path
 
+        # Wrap the zarr array in KVStore if it exposes MutableMapping interface
         zarr_array = zarr.open(zarr_path, mode='r')
+        zarr_array = KVStore(zarr_array.store)
 
         # Open the (possibly new) Zarr file with xarray
         self.ds = xr.open_zarr(zarr_array)
