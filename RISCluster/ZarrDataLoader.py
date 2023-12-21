@@ -53,10 +53,10 @@ class ZarrDataset(Dataset):
 
         # Wrap the zarr array in KVStore if it exposes MutableMapping interface
         zarr_array = zarr.open(zarr_path, mode='r')
-        zarr_array = KVStore(zarr_array.store)
+        #zarr_array = KVStore(zarr_array.store)
 
         # Open the (possibly new) Zarr file with xarray
-        self.ds = xr.open_zarr(zarr_array)
+        self.ds = xr.DataArray(zarr_array)
 
         self.chunk_size = chunk_size
         self.transform = transform
