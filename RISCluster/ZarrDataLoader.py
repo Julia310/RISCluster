@@ -56,8 +56,11 @@ class ZarrDataset(Dataset):
         #zarr_array = KVStore(zarr_array.store)
 
         # Open the (possibly new) Zarr file with xarray
-        zarr_group = zarr.open_group(zarr_path, mode='r')
-        self.ds = xr.open_zarr(zarr_group)
+        zarr_store = zarr.open(zarr_path, mode='r')
+
+        # Use xr.open_dataset for lazy loading
+        # This ensures that data is not loaded into memory all at once
+        self.ds = xr.open_dataset(zarr_store, engine='zarr')
 
         self.chunk_size = chunk_size
         self.transform = transform
