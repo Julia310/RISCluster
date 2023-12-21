@@ -10,16 +10,6 @@ from zarr.storage import KVStore
 import numpy as np
 
 
-class ZarrArrayWrapper:
-    def __init__(self, zarr_array):
-        self.zarr_array = zarr_array
-
-    def __getitem__(self, key):
-        if key == '':
-            return self.zarr_array
-        else:
-            raise KeyError
-
 
 class ZarrDataset(Dataset):
     class SpecgramNormalizer(object):
@@ -49,12 +39,31 @@ class ZarrDataset(Dataset):
             return torch.from_numpy(X)
 
     def __init__(self, zarr_path, chunk_size, transform=None):
-        zarr_array = zarr.open(zarr_path, mode='r')
-        wrapped_array = ZarrArrayWrapper(zarr_array)
+        old_zarr_array = zarr.open(zarr_path, mode='r')
+
+        # Check if the array is already chunked
+        if old_zarr_array.chunks is None:
+            # Create a new chunked Zarr array
+            new_zarr_path = zarr_path + '_chunked'
+            chunks = (64, 1, 101)  # Example chunk sizes, adjust as needed
+            new_zarr_array = zarr.open(new_zarr_path, mode='w', shape=old_zarr_array.shape, dtype=old_zarr_array.dtype,
+                                       chunks=chunks)
+
+            # Copy data from the old array to the new chunked array
+            new_zarr_array[:] = old_zarr_array[:]
+
+            # Use the new chunked array
+            zarr_array = new_zarr_array
+        else:
+            # Use the existing chunked array
+            zarr_array = old_zarr_array
 
         # Use KVStore to wrap the custom class
-        store = KVStore(wrapped_array)
-        self.ds = xr.open_zarr(store, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
+        # Convert the Zarr array to an xarray DataArray
+        data_array = xr.DataArray(zarr_array, dims=['dim_0', 'dim_1', 'dim_2'])
+
+        # Convert the DataArray to a Dataset
+        self.ds = data_array.to_dataset(name='variable')
 
         self.chunk_size = chunk_size
         self.transform = transform
