@@ -45,29 +45,16 @@ class ZarrDataset(Dataset):
         if old_zarr_array.chunks is None:
             # Create a new chunked Zarr array
             new_zarr_path = zarr_path + '_chunked'
-            chunks = (64, 1, 101)  # Example chunk sizes, adjust as needed
-            new_zarr_array = zarr.open(new_zarr_path, mode='w', shape=old_zarr_array.shape, dtype=old_zarr_array.dtype,
-                                       chunks=chunks)
-
-            # Copy data from the old array to the new chunked array
+            chunks = (64, 1, 101)  # Adjust as needed
+            new_zarr_array = zarr.open(new_zarr_path, mode='w', shape=old_zarr_array.shape, dtype=old_zarr_array.dtype, chunks=chunks)
             new_zarr_array[:] = old_zarr_array[:]
+            zarr_path = new_zarr_path  # Use the new chunked path
 
-            # Use the new chunked array
-            zarr_array = new_zarr_array
-        else:
-            # Use the existing chunked array
-            zarr_array = old_zarr_array
-
-        # Use KVStore to wrap the custom class
-        # Convert the Zarr array to an xarray DataArray
-        data_array = xr.DataArray(zarr_array, dims=['dim_0', 'dim_1', 'dim_2'])
-
-        # Convert the DataArray to a Dataset
-        self.ds = data_array.to_dataset(name='variable')
+        # Open the (possibly new) Zarr file with xarray
+        self.ds = xr.open_zarr(zarr_path, chunks={'dim_0': 'auto', 'dim_1': 'auto', 'dim_2': 'auto'})
 
         self.chunk_size = chunk_size
         self.transform = transform
-        self.num_sequences = 50
         self.num_sequences = 50
         self.samples_per_sequence = zarr_array.shape[0] * 2 // (11 * 24 * chunk_size)
 
