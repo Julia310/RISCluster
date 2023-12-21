@@ -17,7 +17,6 @@ ds = ds.chunk({'time': 60, 'channel': 5, 'freq': 101})
 # Save the chunked dataset back to a new Zarr file
 ds.to_zarr('/work/users/jp348bcyy/rhoneCubeNeu/chunked_Cube.zarr', mode='w')
 
-
 # Define a function to calculate chunk boundaries
 def get_chunk_boundaries(dim_size, chunk_size):
     return [(i, min(i + chunk_size, dim_size)) for i in range(0, dim_size, chunk_size)]
