@@ -22,13 +22,11 @@ def get_chunk_boundaries(dim_size, chunk_size):
     return [(i, min(i + chunk_size, dim_size)) for i in range(0, dim_size, chunk_size)]
 
 # Get chunk boundaries for each dimension
-time_chunks = get_chunk_boundaries(ds.dims['time'], 2879)
-channel_chunks = get_chunk_boundaries(ds.dims['channel'], 1)
+time_chunks = get_chunk_boundaries(ds.sizes['time'], 2879)
 
 # Iterate over chunks
 for t_start, t_end in time_chunks:
-    for c_start, c_end in channel_chunks:
-            chunk = ds.isel(time=slice(t_start, t_end), channel=slice(c_start, c_end), freq=slice(None))
-            # Compute the chunk to trigger data loading and perform operations
-            computed_chunk = chunk.compute()
-            print(computed_chunk)
+    chunk = ds.isel(time=slice(t_start, t_end), channel=slice(None), freq=slice(None))
+    # Compute the chunk to trigger data loading and perform operations
+    computed_chunk = chunk.compute()
+    print(computed_chunk)
