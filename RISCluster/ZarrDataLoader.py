@@ -36,7 +36,7 @@ class ZarrDataset(Dataset):
             X = np.expand_dims(X, axis=0)
             return torch.from_numpy(X)
 
-    def __init__(self, zarr_path, sample_size, transform=None, chunk_size=400):
+    def __init__(self, zarr_path, sample_size, transform=None, chunk_size=100):
         # Open the Zarr array with Zarr and wrap it with Dask
         zarr_array = zarr.open(zarr_path, mode='r')
         dask_array = da.from_zarr(zarr_array)
