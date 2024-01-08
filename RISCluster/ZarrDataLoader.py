@@ -1,11 +1,9 @@
 import torch
 import xarray as xr
-import zarr
 from torchvision import transforms
 from torch.utils.data import random_split
 from torch.utils.data import Dataset
 import numpy as np
-import dask.array as da
 
 
 class ZarrDataset(Dataset):
@@ -45,7 +43,7 @@ class ZarrDataset(Dataset):
         self.transform = transform
 
         # Assuming each sample is non-overlapping for simplicity
-        self.num_samples = self.ds.dims['time'].shape[0] // sample_size
+        self.num_samples = self.ds.dims['time'].size // sample_size
 
     def __len__(self):
         return self.num_samples
