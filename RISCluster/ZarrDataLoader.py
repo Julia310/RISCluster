@@ -43,7 +43,7 @@ class ZarrDataset(Dataset):
         self.transform = transform
 
         # Assuming each sample is non-overlapping for simplicity
-        self.num_samples = self.ds.dims['time'].size // sample_size
+        self.num_samples = self.ds.dims['time'] // sample_size
 
     def __len__(self):
         return self.num_samples
