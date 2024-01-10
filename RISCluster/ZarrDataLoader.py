@@ -44,18 +44,27 @@ class ZarrDataset(Dataset):
         self.transform = transform
 
         # Assuming each sample is non-overlapping for simplicity
-        self.num_samples = self.ds.dims['time'] // sample_size
+        self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
+        self.current_channel = 0
 
     def __len__(self):
         return self.num_samples
 
     def __getitem__(self, idx):
         # Calculate the start and end indices for the time dimension
-        start_time = idx * self.sample_size
+        start_time = (idx % self.ds.dims['time']) * self.sample_size
         end_time = start_time + self.sample_size
 
+        if end_time >= self.ds.dims['time']:
+            # Increment channel index and reset time index
+            self.current_channel = self.current_channel + 1
+            start_time = 0
+            end_time = self.sample_size
+
         # Use xarray's indexing to lazily load the data slice
-        sample = self.ds.isel(time=slice(start_time, end_time))
+        sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
+        print(sample)
+
         sample = sample.compute()
 
         # Convert the xarray DataArray to a numpy array
@@ -71,7 +80,6 @@ class ZarrDataset(Dataset):
 
         # Add a channel dimension to the numpy array to be compatible with PyTorch
         sample = np.expand_dims(sample, axis=0)
-        print(sample)
 
         # Convert the numpy array to a PyTorch tensor
         return torch.from_numpy(sample)
