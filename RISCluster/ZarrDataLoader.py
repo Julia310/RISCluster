@@ -64,7 +64,7 @@ class ZarrDataset(Dataset):
         print(type(sample))
 
         # Apply transformations if any
-        if self.transform:
+        if self.transform is not None:
             sample = self.transform(sample)
 
         # Add a channel dimension to the numpy array to be compatible with PyTorch
@@ -83,7 +83,7 @@ def get_zarr_data(split_dataset=True):
 
     sample_size = 4
     #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', sample_size, transform=transform_pipeline)
-    full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=transform_pipeline)
+    full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=None)
     print('full dataset length: ', len(full_dataset))
 
     if split_dataset:
