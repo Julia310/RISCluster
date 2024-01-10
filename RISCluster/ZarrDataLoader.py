@@ -56,10 +56,13 @@ class ZarrDataset(Dataset):
 
         # Use xarray's indexing to lazily load the data slice
         sample = self.ds.isel(time=slice(start_time, end_time))
+        sample = sample.compute()
 
         # Convert the xarray DataArray to a numpy array
         # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
         sample = sample.values
+
+        sample = torch.from_numpy(sample)
         print(sample)
         print(type(sample))
 
