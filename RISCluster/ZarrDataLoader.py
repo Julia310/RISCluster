@@ -12,6 +12,7 @@ class ZarrDataset(Dataset):
             self.transform = transform
 
         def __call__(self, X):
+            print(X)
             n, o = X.shape
             if self.transform == "sample_normalization":
                 X /= np.abs(X).max(axis=(0,1))
@@ -59,6 +60,8 @@ class ZarrDataset(Dataset):
         # Convert the xarray DataArray to a numpy array
         # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
         sample = sample.values
+        print(sample)
+        print(type(sample))
 
         # Apply transformations if any
         if self.transform:
