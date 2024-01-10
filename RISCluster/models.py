@@ -148,6 +148,8 @@ def batch_training(model, dataloader, optimizer, metric, device):
         #_, batch = batch
         x = batch.to(device)
         optimizer.zero_grad()
+        print(x)
+        print(x.shape)
 
         with torch.set_grad_enabled(True):
             #x = x.float()
