@@ -71,6 +71,7 @@ class ZarrDataset(Dataset):
 
         # Add a channel dimension to the numpy array to be compatible with PyTorch
         sample = np.expand_dims(sample, axis=0)
+        print(sample)
 
         # Convert the numpy array to a PyTorch tensor
         return torch.from_numpy(sample)
