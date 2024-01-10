@@ -13,12 +13,12 @@ class ZarrDataset(Dataset):
 
         def __call__(self, X):
             print(X)
-            n, o = X.shape
             if self.transform == "sample_normalization":
                 X /= np.abs(X).max(axis=(0,1))
             elif self.transform == "sample_norm_cent":
                 X = (X - X.mean()) / (np.abs(X).max() + 1e-8)
             elif self.transform == "vec_norm":
+                n, o = X.shape
                 X = np.reshape(X, (1,-1))
                 norm = np.linalg.norm(X) + 1e-8
                 X /= norm
