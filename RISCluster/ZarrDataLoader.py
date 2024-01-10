@@ -60,11 +60,10 @@ class ZarrDataset(Dataset):
 
         # Convert the xarray DataArray to a numpy array
         # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
+        sample = sample.to_array()
         sample = sample.values
 
         sample = torch.from_numpy(sample)
-        print(sample)
-        print(type(sample))
 
         # Apply transformations if any
         if self.transform is not None:
@@ -86,7 +85,7 @@ def get_zarr_data(split_dataset=True):
 
     sample_size = 4
     #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', sample_size, transform=transform_pipeline)
-    full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=None)
+    full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=transform_pipeline)
     print('full dataset length: ', len(full_dataset))
 
     if split_dataset:
