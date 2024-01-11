@@ -61,17 +61,19 @@ class ZarrDataset(Dataset):
     def __getitem__(self, idx):
         # Calculate the start and end indices for the time dimension
         #start_time = (idx % self.ds.dims['time']) * self.sample_size
-        start_time = (idx % self.ds.shape[0]) * self.sample_size
+        start_time = idx % self.ds.shape[0]
         logging.info(f'idx {idx}')
         end_time = start_time + self.sample_size
 
+        self.current_channel = idx % self.ds.shape[1]
+
         #if end_time >= self.ds.dims['time']:
         if end_time >= self.ds.shape[0]:
-            # Increment channel index and reset time index
-            self.current_channel = (self.current_channel + 1)
-            #logging.info(f"current channel: {self.current_channel}, time: {self.ds.shape[0]}, end_time: {end_time}")
+            self.current_channel += 1
             start_time = 0
             end_time = self.sample_size
+
+        logging.info(f"current channel: {self.current_channel}, time: {self.ds.shape[0]}, end_time: {end_time}")
 
         # Use xarray's indexing to lazily load the data slice
         #sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
@@ -89,11 +91,6 @@ class ZarrDataset(Dataset):
         # Apply transformations if any
         if self.transform is not None:
             sample = self.transform(sample)
-
-        # Add a channel dimension to the numpy array to be compatible with PyTorch
-        #sample = np.expand_dims(sample, axis=0)
-
-        #sample = sample.compute()
 
         # Convert the numpy array to a PyTorch tensor
         return sample
