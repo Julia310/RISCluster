@@ -17,7 +17,7 @@ class ZarrDataset(Dataset):
             self.transform = transform
 
         def __call__(self, X):
-            logging.info(f'shape of sample: {X.shape}')
+            #logging.info(f'shape of sample: {X.shape}')
             if self.transform == "sample_normalization":
                 X /= np.abs(X).max(axis=(0,1))
             elif self.transform == "sample_norm_cent":
@@ -67,7 +67,8 @@ class ZarrDataset(Dataset):
         #if end_time >= self.ds.dims['time']:
         if end_time >= self.ds.shape[0]:
             # Increment channel index and reset time index
-            self.current_channel = (self.current_channel + 1) % self.ds.shape[1]
+            self.current_channel = (self.current_channel + 1)
+            logging.info(f"current channel: {self.current_channel}")
             start_time = 0
             end_time = self.sample_size
 
@@ -75,7 +76,7 @@ class ZarrDataset(Dataset):
         #sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
         #sample = sample.compute()
 
-        sample = self.ds[start_time:end_time, self.current_channel, :]#.compute()
+        sample = self.ds[start_time:end_time, self.current_channel, :].compute()
 
         # Convert the xarray DataArray to a numpy array
         # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
@@ -91,11 +92,10 @@ class ZarrDataset(Dataset):
         # Add a channel dimension to the numpy array to be compatible with PyTorch
         #sample = np.expand_dims(sample, axis=0)
 
-        #sample = sample.compute()
+        sample = sample.compute()
 
         # Convert the numpy array to a PyTorch tensor
-        #return torch.from_numpy(sample)
-        return sample
+        return torch.from_numpy(sample)
 
 
 def get_zarr_data(split_dataset=True):
