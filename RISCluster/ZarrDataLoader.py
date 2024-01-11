@@ -68,7 +68,7 @@ class ZarrDataset(Dataset):
         if end_time >= self.ds.shape[0]:
             # Increment channel index and reset time index
             self.current_channel = (self.current_channel + 1)
-            logging.info(f"current channel: {self.current_channel}")
+            logging.info(f"current channel: {self.current_channel}, time: {self.ds.shape[0]}, end_time: {end_time}")
             start_time = 0
             end_time = self.sample_size
 
@@ -95,7 +95,7 @@ class ZarrDataset(Dataset):
         #sample = sample.compute()
 
         # Convert the numpy array to a PyTorch tensor
-        return torch.from_numpy(sample)
+        return sample
 
 
 def get_zarr_data(split_dataset=True):
