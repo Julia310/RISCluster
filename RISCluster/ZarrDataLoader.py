@@ -75,7 +75,7 @@ class ZarrDataset(Dataset):
         #sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
         #sample = sample.compute()
 
-        sample = self.ds[start_time:end_time, self.current_channel].compute()
+        sample = self.ds[start_time:end_time, self.current_channel, :]#.compute()
 
         # Convert the xarray DataArray to a numpy array
         # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
@@ -89,7 +89,9 @@ class ZarrDataset(Dataset):
             sample = self.transform(sample)
 
         # Add a channel dimension to the numpy array to be compatible with PyTorch
-        sample = np.expand_dims(sample, axis=0)
+        #sample = np.expand_dims(sample, axis=0)
+
+        sample = sample.compute()
 
         # Convert the numpy array to a PyTorch tensor
         return torch.from_numpy(sample)
