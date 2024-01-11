@@ -4,6 +4,8 @@ from torchvision import transforms
 from torch.utils.data import random_split
 from torch.utils.data import Dataset
 import numpy as np
+import dask.array as da
+import zarr
 
 
 class ZarrDataset(Dataset):
@@ -38,13 +40,16 @@ class ZarrDataset(Dataset):
 
     def __init__(self, zarr_path, sample_size, transform=None):
         # Open the Zarr dataset as an xarray Dataset, this will handle lazy loading
-        self.ds = xr.open_zarr(zarr_path, consolidated=True)
+        #self.ds = xr.open_zarr(zarr_path, consolidated=True)
+        zarr_array = zarr.open(zarr_path, mode='r')
+        self.ds = da.from_zarr(zarr_array)
 
         self.sample_size = sample_size  # Size of each individual sample in the 'time' dimension
         self.transform = transform
 
         # Assuming each sample is non-overlapping for simplicity
-        self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
+        #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
+        self.num_samples = self.ds.shape[0] //sample_size * self.ds.shape[1]
         self.current_channel = 0
 
     def __len__(self):
@@ -62,17 +67,17 @@ class ZarrDataset(Dataset):
             end_time = self.sample_size
 
         # Use xarray's indexing to lazily load the data slice
-        sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
-        print(sample)
+        #sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
+        #sample = sample.compute()
 
-        sample = sample.compute()
+        sample = self.ds[start_time:end_time, self.current_channel].compute()
 
         # Convert the xarray DataArray to a numpy array
         # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
-        sample = sample.to_array()
-        sample = sample.values
+        #sample = sample.to_array()
+        #sample = sample.values
 
-        sample = torch.from_numpy(sample)
+        #sample = torch.from_numpy(sample)
 
         # Apply transformations if any
         if self.transform is not None:
@@ -93,8 +98,8 @@ def get_zarr_data(split_dataset=True):
     ])
 
     sample_size = 4
-    #full_dataset = ZarrDataset('./1907_NEW_1Hz_TRUNC.zarr', sample_size, transform=transform_pipeline)
-    full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=transform_pipeline)
+    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/subcube_current.zarr', sample_size, transform=transform_pipeline)
+    #full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=transform_pipeline)
     print('full dataset length: ', len(full_dataset))
 
     if split_dataset:
