@@ -57,10 +57,12 @@ class ZarrDataset(Dataset):
 
     def __getitem__(self, idx):
         # Calculate the start and end indices for the time dimension
-        start_time = (idx % self.ds.dims['time']) * self.sample_size
+        #start_time = (idx % self.ds.dims['time']) * self.sample_size
+        start_time = (idx % self.ds.shape[0]) * self.sample_size
         end_time = start_time + self.sample_size
 
-        if end_time >= self.ds.dims['time']:
+        #if end_time >= self.ds.dims['time']:
+        if end_time >= self.ds.shape[0]:
             # Increment channel index and reset time index
             self.current_channel = self.current_channel + 1
             start_time = 0
