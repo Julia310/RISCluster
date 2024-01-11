@@ -146,7 +146,10 @@ def batch_training(model, dataloader, optimizer, metric, device):
     for batch in pbar:
         #print(batch)
         #_, batch = batch
-        x = batch.to(device)
+        x = batch.compute()
+
+        x = torch.from_numpy(x).to(device)
+
         optimizer.zero_grad()
         #print(x)
         #print(x.shape)
