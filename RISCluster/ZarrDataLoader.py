@@ -6,6 +6,9 @@ from torch.utils.data import Dataset
 import numpy as np
 import dask.array as da
 import zarr
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class ZarrDataset(Dataset):
@@ -14,7 +17,7 @@ class ZarrDataset(Dataset):
             self.transform = transform
 
         def __call__(self, X):
-            print(X)
+            logging.info(f'shape of sample: {X.shape}')
             if self.transform == "sample_normalization":
                 X /= np.abs(X).max(axis=(0,1))
             elif self.transform == "sample_norm_cent":
