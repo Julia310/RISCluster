@@ -62,6 +62,7 @@ class ZarrDataset(Dataset):
         # Calculate the start and end indices for the time dimension
         #start_time = (idx % self.ds.dims['time']) * self.sample_size
         start_time = (idx % self.ds.shape[0]) * self.sample_size
+        logging.info(f'start {start_time}')
         end_time = start_time + self.sample_size
 
         #if end_time >= self.ds.dims['time']:
