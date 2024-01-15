@@ -1,4 +1,7 @@
 import os
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 directory_path = r'/work/users/jp348bcyy/rhoneDataCube/Cube.zarr/from-zarr-1e0224d98164576ed1142f352a3253c6'
 
@@ -6,6 +9,7 @@ directory_path = r'/work/users/jp348bcyy/rhoneDataCube/Cube.zarr/from-zarr-1e022
 # Iterate over entries in the directory
 with os.scandir(directory_path) as it:
     for entry in it:
+        logging.info(entry)
         if entry.is_file():
             os.remove(entry.path)
 
