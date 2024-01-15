@@ -17,4 +17,6 @@ def copy_large_directory(src, dst):
 source_path = '/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr'
 destination_path = '/work/users/jp348bcyy/rhoneDataCube/Cube_chunked.zarr'
 
+copy_large_directory(source_path, destination_path)
+
 # Make sure the destination directory does not already exist
