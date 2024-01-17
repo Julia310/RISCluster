@@ -63,18 +63,13 @@ class ZarrDataset(Dataset):
         return self.num_samples
 
     def __getitem__(self, idx):
-        start_time = idx * self.chunk_size
+        start_time = (idx * self.chunk_size) % self.ds.shape[0]
         end_time = start_time + self.chunk_size
 
-        channel = idx // (self.chunk_size * self.ds.shape[1])
-
-        if end_time > self.ds.shape[0]:
-            end_time = self.ds.shape[0]
+        channel = (idx * self.chunk_size) // self.ds.shape[0]
 
         # Load the entire chunk
         chunk = self.ds[start_time:end_time, channel, :].compute()
-
-        logging.info(f'chunk: {chunk}')
 
         # Split the chunk into spectrograms
         spectrograms = [chunk[i:i + self.spectrogram_size, :] for i in range(0, len(chunk), self.spectrogram_size)]
@@ -84,13 +79,13 @@ class ZarrDataset(Dataset):
         for spec in spectrograms:
             if self.transform is not None:
                 spec = self.transform(spec)
-            spec_tensor = torch.from_numpy(spec)
-            processed_spectrograms.append(spec_tensor)
+            processed_spectrograms.append(spec)
+            logging.info(f"Spectrogram tensor shape: {spec.shape}")
 
         # Stack the spectrograms into a batch
         batch = torch.stack(processed_spectrograms)
-
         return batch
+
 
 
 def get_zarr_data(split_dataset=True):
