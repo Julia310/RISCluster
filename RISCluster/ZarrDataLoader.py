@@ -16,7 +16,6 @@ class ZarrDataset(Dataset):
             self.transform = transform
 
         def __call__(self, X):
-            #logging.info(f'shape of sample: {X.shape}')
             if self.transform == "sample_normalization":
                 X /= np.abs(X).max(axis=(0,1))
             elif self.transform == "sample_norm_cent":
@@ -53,7 +52,6 @@ class ZarrDataset(Dataset):
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
         self.num_samples = self.ds.shape[0] // self.chunk_size * self.ds.shape[1]
-        logging.info(f'Num samples: {self.num_samples}, chunk size: {self.chunk_size}')
         self.spectrogram_size = 4
 
 
@@ -79,7 +77,6 @@ class ZarrDataset(Dataset):
             if self.transform is not None:
                 spec = self.transform(spec)
             processed_spectrograms.append(spec)
-            logging.info(f"Spectrogram tensor shape: {spec.shape}")
 
         # Stack the spectrograms into a batch
         batch = torch.stack(processed_spectrograms)
