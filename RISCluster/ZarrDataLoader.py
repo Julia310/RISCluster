@@ -54,6 +54,7 @@ class ZarrDataset(Dataset):
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
         self.num_samples = self.ds.shape[0] // self.chunk_size * self.ds.shape[1]
+        logging.info(f'Num samples: {self.num_samples}, chunk size: {self.chunk_size}')
         self.current_channel = 0
         self.spectrogram_size = 4
 
@@ -66,11 +67,15 @@ class ZarrDataset(Dataset):
         start_time = idx * self.chunk_size
         end_time = start_time + self.chunk_size
 
+        channel = idx // (self.chunk_size * self.ds.shape[1])
+
         if end_time > self.ds.shape[0]:
             end_time = self.ds.shape[0]
 
         # Load the entire chunk
-        chunk = self.ds[start_time:end_time, :].compute()
+        chunk = self.ds[start_time:end_time, channel, :].compute()
+
+        logging.info(f'chunk: {chunk}')
 
         # Split the chunk into spectrograms
         spectrograms = [chunk[i:i + self.spectrogram_size, :] for i in range(0, len(chunk), self.spectrogram_size)]
