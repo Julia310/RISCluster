@@ -1,4 +1,5 @@
-import torchfrom torchvision import transforms
+import torch
+from torchvision import transforms
 from torch.utils.data import random_split
 from torch.utils.data import Dataset
 import numpy as np
