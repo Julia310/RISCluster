@@ -46,54 +46,47 @@ class ZarrDataset(Dataset):
         #self.ds = xr.open_zarr(zarr_path, consolidated=True)
         zarr_array = zarr.open(zarr_path, mode='r')
         self.ds = da.from_zarr(zarr_array)
+        self.chunk_size = 60
 
         self.sample_size = sample_size  # Size of each individual sample in the 'time' dimension
         self.transform = transform
 
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
-        self.num_samples = self.ds.shape[0] //sample_size * self.ds.shape[1]
+        self.num_samples = self.ds.shape[0] // self.chunk_size * self.ds.shape[1]
         self.current_channel = 0
+        self.spectrogram_size = 4
+
+
 
     def __len__(self):
         return self.num_samples
 
     def __getitem__(self, idx):
-        # Calculate the start and end indices for the time dimension
-        #start_time = (idx % self.ds.dims['time']) * self.sample_size
-        start_time = idx % self.ds.shape[0]
-        logging.info(f'idx {idx}')
-        end_time = start_time + self.sample_size
+        start_time = idx * self.chunk_size
+        end_time = start_time + self.chunk_size
 
-        self.current_channel = idx % self.ds.shape[1]
+        if end_time > self.ds.shape[0]:
+            end_time = self.ds.shape[0]
 
-        #if end_time >= self.ds.dims['time']:
-        if end_time >= self.ds.shape[0]:
-            self.current_channel += 1
-            start_time = 0
-            end_time = self.sample_size
+        # Load the entire chunk
+        chunk = self.ds[start_time:end_time, :].compute()
 
-        logging.info(f"current channel: {self.current_channel}, time: {self.ds.shape[0]}, end_time: {end_time}")
+        # Split the chunk into spectrograms
+        spectrograms = [chunk[i:i + self.spectrogram_size, :] for i in range(0, len(chunk), self.spectrogram_size)]
 
-        # Use xarray's indexing to lazily load the data slice
-        #sample = self.ds.isel(time=slice(start_time, end_time), channel=self.current_channel)
-        #sample = sample.compute()
+        # Process each spectrogram
+        processed_spectrograms = []
+        for spec in spectrograms:
+            if self.transform is not None:
+                spec = self.transform(spec)
+            spec_tensor = torch.from_numpy(spec)
+            processed_spectrograms.append(spec_tensor)
 
-        sample = self.ds[start_time:end_time, self.current_channel, :].compute()
+        # Stack the spectrograms into a batch
+        batch = torch.stack(processed_spectrograms)
 
-        # Convert the xarray DataArray to a numpy array
-        # Since xarray uses dask under the hood for lazy loading, the actual computation happens here
-        #sample = sample.to_array()
-        #sample = sample.values
-
-        #sample = torch.from_numpy(sample)
-
-        # Apply transformations if any
-        if self.transform is not None:
-            sample = self.transform(sample)
-
-        # Convert the numpy array to a PyTorch tensor
-        return sample
+        return batch
 
 
 def get_zarr_data(split_dataset=True):
