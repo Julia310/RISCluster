@@ -55,7 +55,6 @@ class ZarrDataset(Dataset):
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
         self.num_samples = self.ds.shape[0] // self.chunk_size * self.ds.shape[1]
         logging.info(f'Num samples: {self.num_samples}, chunk size: {self.chunk_size}')
-        self.current_channel = 0
         self.spectrogram_size = 4
 
 
