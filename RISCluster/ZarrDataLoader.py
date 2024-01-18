@@ -16,16 +16,17 @@ class ZarrDataset(Dataset):
             self.transform = transform
 
         def __call__(self, X):
+            X = X.to(torch.float32)  # Ensure the tensor is floating-point for division
             if self.transform == "sample_normalization":
-                X /= np.abs(X).max(axis=(0,1))
+                X /= torch.abs(X).amax(dim=(1, 2), keepdim=True)
             elif self.transform == "sample_norm_cent":
-                X = (X - X.mean()) / (np.abs(X).max() + 1e-8)
+                X = (X - X.mean(dim=(1, 2), keepdim=True)) / (torch.abs(X).amax(dim=(1, 2), keepdim=True) + 1e-8)
             elif self.transform == "vec_norm":
-                n, o = X.shape
-                X = np.reshape(X, (1,-1))
-                norm = np.linalg.norm(X) + 1e-8
+                shape = X.shape
+                X = X.view(shape[0], -1)
+                norm = torch.linalg.norm(X, dim=1, keepdim=True) + 1e-8
                 X /= norm
-                X = np.reshape(X, (n, o))
+                X = X.view(*shape)
             return X
 
     class SpecgramCrop(object):
@@ -66,17 +67,19 @@ class ZarrDataset(Dataset):
         channel = (idx * self.chunk_size) // self.ds.shape[0]
 
         # Load the entire chunk
-        chunk = self.ds[start_time:end_time, channel, :].compute()
+        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double().to('cuda')
 
+        if self.transform is not None:
+            chunk = self.transform(chunk)
         # Split the chunk into spectrograms
         spectrograms = [chunk[i:i + self.spectrogram_size, :] for i in range(0, len(chunk), self.spectrogram_size)]
 
         # Process each spectrogram
         processed_spectrograms = []
         for spec in spectrograms:
-            if self.transform is not None:
-                spec = self.transform(spec)
-            processed_spectrograms.append(spec)
+            if spec.shape[1] == 4:
+                spec = spec.unsqueeze(0)
+                processed_spectrograms.append(spec)
 
         # Stack the spectrograms into a batch
         batch = torch.stack(processed_spectrograms)
@@ -87,7 +90,6 @@ class ZarrDataset(Dataset):
 def get_zarr_data(split_dataset=True):
     transform_pipeline = transforms.Compose([
         ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
-        ZarrDataset.SpecgramToTensor(),
         lambda x: x.double(),
     ])
 
