@@ -144,9 +144,9 @@ def batch_training(model, dataloader, optimizer, metric, device):
     )
 
     for batch in pbar:
-        #print(batch)
-        #_, batch = batch
-        x = batch.to(device)
+        batch_size, mini_batch, channels, height, width = batch.size()
+        x = batch.view(batch_size * mini_batch, channels, height, width).to(device)
+
         optimizer.zero_grad()
         print(x.shape)
 
