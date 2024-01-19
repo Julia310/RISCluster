@@ -20,7 +20,7 @@ class ZarrDataset(Dataset):
             if self.transform == "sample_normalization":
                 X /= torch.abs(X).amax(dim=(1, 2), keepdim=True)
             elif self.transform == "sample_norm_cent":
-                X = (X - X.mean(dim=(1, 2), keepdim=True)) / (torch.abs(X).amax(dim=(1, 2), keepdim=True) + 1e-8)
+                X = (X - X.mean()) / (torch.abs(X).amax() + 1e-8)
             elif self.transform == "vec_norm":
                 shape = X.shape
                 X = X.view(shape[0], -1)
