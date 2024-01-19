@@ -60,14 +60,14 @@ def batch_eval(dataloader, model, device, mute=True):
         Latent space data (m_samples, d_features)
     '''
     model.eval()
-    model.double()
+    model.float()
 
     bsz = dataloader.batch_size
     z_array = np.zeros(
         (len(dataloader.dataset),
         model.encoder.encoder[8].out_features),
-        #dtype=np.float32
-        dtype=np.float64
+        dtype=np.float32
+        #dtype=np.float64
     )
 
     # If the model has the "n_clusters" attribute, then the correct
@@ -78,8 +78,8 @@ def batch_eval(dataloader, model, device, mute=True):
         q_array = np.zeros(
             (len(dataloader.dataset),
             model.n_clusters),
-            #dtype=np.float32
-            dtype=np.float64
+            dtype=np.float32
+            #dtype=np.float64
         )
         for b, batch in enumerate(tqdm(dataloader, disable=mute)):
             #print(batch)
@@ -148,11 +148,10 @@ def batch_training(model, dataloader, optimizer, metric, device):
         x = batch.view(batch_size * mini_batch, channels, height, width).to(device)
 
         optimizer.zero_grad()
-        print(x.shape)
 
         with torch.set_grad_enabled(True):
             #x = x.float()
-            model.double()
+            model.float()
             x_rec, _ = model(x)
             loss = metric(x_rec, x)
             loss.backward()
@@ -604,7 +603,7 @@ def model_prediction(
     savepath = config.savepath_exp
 
     model.load_state_dict(torch.load(config.saved_weights, map_location=device))
-    model.double()  # Convert entire model to double precision
+    model.float()  # Convert entire model to double precision
     model.eval()
 
     bsz = dataloader.batch_size
@@ -963,7 +962,7 @@ def model_training(config, model, dataloaders, metrics, optimizer, **hpkwargs):
 
         tra_loader = dataloaders[0]
 
-        model.double()
+        model.float()
 
         fignames = [
             'T-SNE',
