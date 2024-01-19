@@ -76,8 +76,8 @@ class ZarrDataset(Dataset):
         # Process each spectrogram
         processed_spectrograms = []
         for spec in spectrograms:
+            spec = spec.unsqueeze(0)
             if spec.shape[1] == 4:
-                spec = spec.unsqueeze(0)
                 processed_spectrograms.append(spec)
 
         # Stack the spectrograms into a batch
