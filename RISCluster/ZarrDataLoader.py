@@ -39,7 +39,6 @@ class ZarrDataset(Dataset):
             X = np.expand_dims(X, axis=0)
             return torch.from_numpy(X)
 
-
     def __init__(self, zarr_path, sample_size, transform=None):
         # Open the Zarr dataset as an xarray Dataset, this will handle lazy loading
         #self.ds = xr.open_zarr(zarr_path, consolidated=True)
@@ -57,8 +56,6 @@ class ZarrDataset(Dataset):
         self.num_samples = self.ds.shape[0] // self.chunk_size * self.ds.shape[1]
         self.spectrogram_size = 4
 
-
-
     def __len__(self):
         return self.num_samples
 
@@ -69,7 +66,7 @@ class ZarrDataset(Dataset):
         channel = (idx * self.chunk_size) // self.ds.shape[0]
 
         # Load the entire chunk
-        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double().to('cuda')
+        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double()
 
         if self.transform is not None:
             chunk = self.transform(chunk)
