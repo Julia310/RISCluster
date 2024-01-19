@@ -68,6 +68,12 @@ class ZarrDataset(Dataset):
 
         channel = (idx * self.chunk_size) // self.ds.shape[0]
 
+        slice_data = self.ds[start_time:end_time, channel, :]
+        logging.info('===================================')
+        logging.info(type(slice_data))
+        logging.info('===================================')
+
+
         # Load the entire chunk
         chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :]).double().to('cuda')
 
