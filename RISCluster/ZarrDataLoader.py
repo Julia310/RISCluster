@@ -43,9 +43,11 @@ class ZarrDataset(Dataset):
     def __init__(self, zarr_path, sample_size, transform=None):
         # Open the Zarr dataset as an xarray Dataset, this will handle lazy loading
         #self.ds = xr.open_zarr(zarr_path, consolidated=True)
-        zarr_array = zarr.open(zarr_path, mode='r')
+        #zarr_array = zarr.open(zarr_path, mode='r')
+        group = zarr.open_group(zarr_path, mode='r')
+        zarr_array = group[list(group.keys())[0]]
         self.ds = da.from_zarr(zarr_array)
-        self.chunk_size = 60
+        self.chunk_size = 5758
 
         self.sample_size = sample_size  # Size of each individual sample in the 'time' dimension
         self.transform = transform
@@ -67,7 +69,7 @@ class ZarrDataset(Dataset):
         channel = (idx * self.chunk_size) // self.ds.shape[0]
 
         # Load the entire chunk
-        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double().to('cuda')
+        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :]).double().to('cuda')
 
         if self.transform is not None:
             chunk = self.transform(chunk)
@@ -94,7 +96,7 @@ def get_zarr_data(split_dataset=True):
     ])
 
     sample_size = 4
-    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneCubeNeu/Cube.zarr', sample_size, transform=transform_pipeline)
+    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', sample_size, transform=transform_pipeline)
     #full_dataset = ZarrDataset("/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_60.zarr", sample_size, transform=transform_pipeline)
     print('full dataset length: ', len(full_dataset))
 
