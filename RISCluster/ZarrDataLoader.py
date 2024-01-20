@@ -66,7 +66,7 @@ class ZarrDataset(Dataset):
         channel = (idx * self.chunk_size) // self.ds.shape[0]
 
         # Load the entire chunk
-        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).float()
+        chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double()
 
         if self.transform is not None:
             chunk = self.transform(chunk)
@@ -89,7 +89,7 @@ class ZarrDataset(Dataset):
 def get_zarr_data(split_dataset=True):
     transform_pipeline = transforms.Compose([
         ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
-        lambda x: x.float(),
+        lambda x: x.double(),
     ])
 
     sample_size = 4

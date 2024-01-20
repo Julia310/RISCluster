@@ -318,7 +318,7 @@ def cluster_gallery(
     model.eval()
     label_list, counts = np.unique(labels, return_counts=True)
     if centroids is not None:
-        X_c = model.decoder(torch.from_numpy(centroids).float().to(device))
+        X_c = model.decoder(torch.from_numpy(centroids).double().to(device))
     else:
         centroids = model.clustering.weights
         X_c = model.decoder(centroids)
