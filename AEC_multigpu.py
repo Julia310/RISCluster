@@ -13,6 +13,10 @@ from RISCluster.networks import AEC, init_weights
 import logging
 # Suppress specific c10d warnings
 import warnings
+from tensorboardX import SummaryWriter
+
+writer = SummaryWriter()
+
 warnings.filterwarnings("ignore", category=UserWarning, module="c10d")
 
 logging.getLogger('torch.distributed').setLevel(logging.ERROR)
@@ -52,6 +56,7 @@ class Trainer:
         loss = F.mse_loss(output, batch)
         loss.backward()
         self.optimizer.step()
+        return loss
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
@@ -59,28 +64,26 @@ class Trainer:
         self.train_data.sampler.set_epoch(epoch)
 
         # Initialize tqdm only on rank 0
-        if dist.get_rank() == 0:
-            pbar = tqdm(
-                self.train_data,
-                leave=True,
-                desc="  Training",
-                unit="batch",
-                bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}'
-            )
-        else:
-            pbar = self.train_data  # Just use the DataLoader without tqdm on other ranks
+        pbar = tqdm(
+            self.train_data,
+            leave=True,
+            desc="  Training",
+            unit="batch",
+            bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}'
+        )
 
         for batch in pbar:
             batch_size, mini_batch, channels, height, width = batch.size()
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
-            self._run_batch(batch)
+            loss = self._run_batch(batch)
 
-            # Synchronize all processes before updating progress bar
-            dist.barrier()
+            writer.add_scalar('training_loss', loss.item(), epoch)
 
-        # Ensure that all processes are synchronized before moving on
+        # Synchronize all processes before updating progress bar
         dist.barrier()
 
+        # Close the tqdm progress bar for this epoch
+        pbar.close()
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.module.state_dict()
@@ -93,6 +96,8 @@ class Trainer:
             self._run_epoch(epoch)
             if self.gpu_id == 0 and epoch % self.save_every == 0:
                 self._save_checkpoint(epoch)
+        # Close the SummaryWriter when training is complete
+        writer.close()
 
 
 def load_train_objs():
