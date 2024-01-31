@@ -11,7 +11,9 @@ import os
 import torch.distributed as dist
 from RISCluster.networks import AEC, init_weights
 import logging
-
+# Suppress specific c10d warnings
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="c10d")
 
 logging.getLogger('torch.distributed').setLevel(logging.ERROR)
 
