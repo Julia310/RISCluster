@@ -8,6 +8,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import os
+import torch.distributed as dist
 from RISCluster.networks import AEC, init_weights
 import logging
 
@@ -55,17 +56,28 @@ class Trainer:
         print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
 
-        pbar = tqdm(
-            self.train_data,
-            leave=True,
-            desc="  Training",
-            unit="batch",
-            bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}'
-        )
+        # Initialize tqdm only on rank 0
+        if dist.get_rank() == 0:
+            pbar = tqdm(
+                self.train_data,
+                leave=True,
+                desc="  Training",
+                unit="batch",
+                bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}'
+            )
+        else:
+            pbar = self.train_data  # Just use the DataLoader without tqdm on other ranks
+
         for batch in pbar:
             batch_size, mini_batch, channels, height, width = batch.size()
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
             self._run_batch(batch)
+
+            # Synchronize all processes before updating progress bar
+            dist.barrier()
+
+        # Ensure that all processes are synchronized before moving on
+        dist.barrier()
 
 
     def _save_checkpoint(self, epoch):
