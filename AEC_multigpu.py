@@ -15,7 +15,14 @@ import logging
 import warnings
 from tensorboardX import SummaryWriter
 
-writer = SummaryWriter()
+logdir = './log_dir'
+
+# Create the log directory if it doesn't exist
+os.makedirs(logdir, exist_ok=True)
+
+# Provide the log directory path to the SummaryWriter
+writer = SummaryWriter(logdir=logdir)
+
 
 warnings.filterwarnings("ignore", category=UserWarning, module="c10d")
 
