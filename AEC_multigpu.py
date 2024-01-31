@@ -9,6 +9,10 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import os
 from RISCluster.networks import AEC, init_weights
+import logging
+
+
+logging.getLogger('torch.distributed').setLevel(logging.ERROR)
 
 
 def ddp_setup(rank, world_size):
