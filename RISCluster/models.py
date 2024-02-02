@@ -208,8 +208,8 @@ def batch_validation(model, dataloader, metrics, config):
     )
 
     for batch in pbar:
-        #_, batch = batch
-        x = batch.to(config.device)
+        batch_size, mini_batch, channels, height, width = batch.size()
+        x = batch.view(batch_size * mini_batch, channels, height, width).to(config.device)
         loss = torch.zeros((len(metrics),))
         with torch.no_grad():
             if config.model == 'AEC':
