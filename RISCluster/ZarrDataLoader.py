@@ -53,17 +53,17 @@ class ZarrDataset(Dataset):
 
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
-        self.num_samples = self.ds.shape[0] // self.chunk_size * ((self.ds.shape[1] - 1600) // 5)
+        self.num_samples = (self.ds.shape[0] // 11 * 2) // self.chunk_size * ((self.ds.shape[1] - 1600) // 5)
         self.spectrogram_size = 4
 
     def __len__(self):
         return self.num_samples
 
     def __getitem__(self, idx):
-        start_time = (idx * self.chunk_size) % self.ds.shape[0]
+        start_time = (idx * self.chunk_size) % (self.ds.shape[0] // 11 * 2)
         end_time = start_time + self.chunk_size
 
-        channel = (idx * self.chunk_size) // self.ds.shape[0] * 5 + 1600
+        channel = (idx * self.chunk_size) // (self.ds.shape[0] // 11 * 2) * 5 + 1600
 
         # Load the entire chunk
         chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double()
