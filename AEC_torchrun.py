@@ -38,7 +38,7 @@ class Trainer:
             print("Loading snapshot")
             self._load_snapshot(snapshot_path)
 
-        self.model = DDP(self.model, device_ids=[self.gpu_id])
+        self.model = DDP(self.model, device_ids=[self.gpu_id], find_unused_parameters=True)
 
     def _load_snapshot(self, snapshot_path):
         loc = f"cuda:{self.gpu_id}"
