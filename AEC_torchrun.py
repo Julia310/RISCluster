@@ -6,6 +6,7 @@ from RISCluster.networks import AEC, init_weights, UNet
 import torch.distributed as dist
 from tqdm import tqdm
 import torch.multiprocessing as mp
+from torch.distributed.elastic.multiprocessing.errors import record
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
@@ -116,6 +117,7 @@ def prepare_dataloader(dataset: Dataset, batch_size: int):
     )
 
 
+@record
 def main(save_every: int, total_epochs: int, batch_size: int, snapshot_path: str = "snapshot.pt"):
     ddp_setup()
     dataset, model, optimizer = load_train_objs()
