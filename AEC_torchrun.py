@@ -50,7 +50,7 @@ class Trainer:
     def _run_batch(self, batch):
         self.optimizer.zero_grad()
         output, _ = self.model(batch)
-        print(f'batch: {type(batch)}, output: {type(output)}')
+        #print(f'batch: {type(batch)}, output: {type(output)}')
         loss = F.mse_loss(output, batch)
         loss.backward()
         self.optimizer.step()
@@ -78,7 +78,7 @@ class Trainer:
             #writer.add_scalar('training_loss', loss.item(), epoch)
 
         # Synchronize all processes before updating progress bar
-        dist.barrier()
+        #dist.barrier()
 
         # Close the tqdm progress bar for this epoch
         pbar.close()
