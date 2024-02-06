@@ -112,6 +112,7 @@ def prepare_dataloader(dataset: Dataset, batch_size: int):
     return DataLoader(
         dataset,
         batch_size=batch_size,
+        num_workers=5,
         pin_memory=True,
         shuffle=False,
         sampler=DistributedSampler(dataset)
