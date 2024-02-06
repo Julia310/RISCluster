@@ -49,7 +49,7 @@ class Trainer:
 
     def _run_batch(self, batch):
         self.optimizer.zero_grad()
-        output = self.model(batch)
+        output, _ = self.model(batch)
         print(f'batch: {type(batch)}, output: {type(output)}')
         loss = F.mse_loss(output, batch)
         loss.backward()
@@ -73,7 +73,7 @@ class Trainer:
         for batch in pbar:
             batch_size, mini_batch, channels, height, width = batch.size()
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
-            loss = self._run_batch(batch)
+            self._run_batch(batch)
 
             #writer.add_scalar('training_loss', loss.item(), epoch)
 
