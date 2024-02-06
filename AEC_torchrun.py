@@ -50,7 +50,6 @@ class Trainer:
     def _run_batch(self, batch):
         self.optimizer.zero_grad()
         output, _ = self.model(batch)
-        #print(f'batch: {type(batch)}, output: {type(output)}')
         loss = F.mse_loss(output, batch)
         loss.backward()
         self.optimizer.step()
