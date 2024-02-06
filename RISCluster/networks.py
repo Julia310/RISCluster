@@ -56,10 +56,12 @@ def down_linear(in_features, out_features):
         nn.Sigmoid(),
         nn.Linear(in_features // 16, in_features // 64),
         nn.Sigmoid(),
-        nn.Linear(in_features // 64, in_features // 128),
+        nn.Linear(in_features // 64, in_features // 256),
         nn.Sigmoid(),
-        nn.Linear(in_features // 128, out_features),
-        nn.Sigmoid(),
+        #nn.Linear(in_features // 64, in_features // 128),
+        #nn.Sigmoid(),
+        #nn.Linear(in_features // 128, out_features),
+        #nn.Sigmoid(),
 
     )
     return conv_op
@@ -67,11 +69,15 @@ def down_linear(in_features, out_features):
 
 def up_linear(in_features, out_features):
     conv_op = nn.Sequential(
-        nn.Linear(in_features, out_features // 128),
+        #nn.Linear(in_features, out_features // 128),
+        #nn.Sigmoid(),
+        #nn.Linear(out_features // 128, out_features // 64),
+        #nn.Sigmoid(),
+        nn.Linear(in_features, out_features // 256),
         nn.Sigmoid(),
-        nn.Linear(out_features // 128, out_features // 46),
+        nn.Linear(out_features // 256, out_features // 64),
         nn.Sigmoid(),
-        nn.Linear(out_features // 46, out_features // 16),
+        nn.Linear(out_features // 64, out_features // 16),
         nn.Sigmoid(),
         nn.Linear(out_features // 16, out_features // 4),
         nn.Sigmoid(),
@@ -93,8 +99,10 @@ class UNet(nn.Module):
         self.down_convolution_3 = double_convolution(32, 64)
         self.down_convolution_4 = double_convolution(64, 128)
         self.down_convolution_5 = double_convolution(128, 256)
-        self.down_flatten = down_linear(128*4*8, 9)
-        self.up_unflatten = up_linear(9, 128*4*8)
+        #self.down_flatten = down_linear(128*4*8, 9)
+        self.down_flatten = down_linear(128*4*8, 16)
+        #self.up_unflatten = up_linear(9, 128*4*8)
+        self.up_unflatten = up_linear(16, 128*4*8)
         # Expanding path.
         self.up_transpose_1 = nn.ConvTranspose2d(
             in_channels=128, out_channels=64,
@@ -134,14 +142,14 @@ class UNet(nn.Module):
         down_8 = self.down_flatten(down_7)
 
         up_0 = self.up_unflatten(down_8)
-        x = self.up_convolution_1(torch.cat([down_7, up_0], 1))
-        up_1 = self.up_transpose_1(x)
-        x = self.up_convolution_2(torch.cat([down_5, up_1], 1))
-        up_2 = self.up_transpose_2(x)
-        x = self.up_convolution_3(torch.cat([down_3, up_2], 1))
-        up_3 = self.up_transpose_3(x)
-        x = self.up_convolution_4(torch.cat([down_1, up_3], 1))
-        out = self.out(x)
+        y = self.up_convolution_1(torch.cat([down_7, up_0], 1))
+        up_1 = self.up_transpose_1(y)
+        y = self.up_convolution_2(torch.cat([down_5, up_1], 1))
+        up_2 = self.up_transpose_2(y)
+        y = self.up_convolution_3(torch.cat([down_3, up_2], 1))
+        up_3 = self.up_transpose_3(y)
+        y = self.up_convolution_4(torch.cat([down_1, up_3], 1))
+        out = self.out(y)
         return out, x
 
 
