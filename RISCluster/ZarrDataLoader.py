@@ -68,14 +68,14 @@ class ZarrDataset(Dataset):
         # Load the entire chunk
         chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double()
 
-        if self.transform is not None:
-            chunk = self.transform(chunk)
         # Split the chunk into spectrograms
         spectrograms = [chunk[i:i + self.spectrogram_size, :] for i in range(0, len(chunk), self.spectrogram_size)]
 
         # Process each spectrogram
         processed_spectrograms = []
         for spec in spectrograms:
+            if self.transform is not None:
+                spec = self.transform(spec)
             spec = spec.unsqueeze(0)
             if spec.shape[1] == 4:
                 processed_spectrograms.append(spec)
