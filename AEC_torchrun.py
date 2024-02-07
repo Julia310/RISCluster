@@ -47,21 +47,22 @@ class Trainer:
         self.epochs_run = snapshot["EPOCHS_RUN"]
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
-    def _run_batch(self, batch):
+    def _run_batch(self, batch, epoch):
         self.optimizer.zero_grad()
         output, _ = self.model(batch)
         loss = F.mse_loss(output, batch)
         loss.backward()
         self.optimizer.step()
+        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
-        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
+        #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
             batch_size, mini_batch, channels, height, width = batch.size()
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
-            self._run_batch(batch)
+            self._run_batch(batch, epoch)
 
 
     def _save_snapshot(self, epoch):
