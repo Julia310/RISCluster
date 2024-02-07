@@ -41,7 +41,7 @@ transform = 'sample_norm_cent'
 parameters = {
     'model': 'AEC',
     'mode': 'train',
-    'n_epochs': 100,
+    'n_epochs': 20,
     'show': False,
     'send_message': False,
     'early_stopping': True,
