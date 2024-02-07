@@ -41,7 +41,7 @@ transform = 'sample_norm_cent'
 parameters = {
     'model': 'AEC',
     'mode': 'train',
-    'n_epochs': 500,
+    'n_epochs': 100,
     'show': False,
     'send_message': False,
     'early_stopping': True,
@@ -50,13 +50,13 @@ parameters = {
     'img_index': str(img_index)[1:-1],
     'tb': True,
     'tbport': 6999,
-    'workers': 1,
+    'workers': 5,
     'loadmode': 'ram',
     'datafiletype': 'h5'
 }
 hyperparameters = {
-    'batch_size': '128',
-    'lr': '0.0001, 0.001, 0.01'
+    'batch_size': '5',
+    'lr': '0.0001'
 }
 init_path = utils.config_training(universal, parameters, hyperparameters)
 config_AEC = utils.Configuration(init_path)
