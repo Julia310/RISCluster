@@ -6,6 +6,7 @@ from RISCluster.networks import AEC, init_weights, UNet
 import torch.distributed as dist
 from tqdm import tqdm
 import torch.multiprocessing as mp
+from torch.utils.data import random_split
 from torch.distributed.elastic.multiprocessing.errors import record
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -23,17 +24,26 @@ class Trainer:
             self,
             model: torch.nn.Module,
             train_data: DataLoader,
+            test_data: DataLoader,
             optimizer: torch.optim.Optimizer,
             save_every: int,
             snapshot_path: str,
+            early_stopping: bool = True,
+            patience: int = 10,
     ) -> None:
         self.gpu_id = int(os.environ["LOCAL_RANK"])
         self.model = model.to(self.gpu_id)
         self.train_data = train_data
+        self.test_data = test_data
         self.optimizer = optimizer
         self.save_every = save_every
         self.epochs_run = 0
         self.snapshot_path = snapshot_path
+        self.early_stopping = early_stopping
+        self.patience = patience
+        self.best_val_loss = float('inf')
+        self.strikes = 0
+        self.finished = False
         if os.path.exists(snapshot_path):
             print("Loading snapshot")
             self._load_snapshot(snapshot_path)
@@ -64,6 +74,32 @@ class Trainer:
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
             self._run_batch(batch, epoch)
 
+    def _validate(self):
+        self.model.eval()  # Set the model to evaluation mode
+        val_loss = 0.0
+        with torch.no_grad():  # No need to track gradients during validation
+            for batch in self.test_data:
+                batch_size, mini_batch, channels, height, width = batch.size()
+                batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
+                output, _ = self.model(batch)
+                loss = F.mse_loss(output, batch)
+                val_loss += loss.item() * batch.size(0)  # Aggregate the loss
+
+        # Convert total loss to tensor for all_reduce operation
+        val_loss_tensor = torch.tensor([val_loss], device=self.gpu_id)
+        # Use all_reduce to sum up the losses from all GPUs
+        dist.all_reduce(val_loss_tensor, op=dist.ReduceOp.SUM)
+
+        # Compute the average loss across all GPUs and samples
+        num_total_samples = val_loss_tensor.new_tensor([len(self.test_data)], dtype=torch.long)
+        dist.all_reduce(num_total_samples, op=dist.ReduceOp.SUM)
+        avg_val_loss = val_loss_tensor.item() / num_total_samples.item()
+
+        if self.gpu_id == 0:
+            print(f"Validation Loss: {avg_val_loss}")
+
+        return avg_val_loss
+
 
     def _save_snapshot(self, epoch):
         snapshot = {
@@ -78,14 +114,40 @@ class Trainer:
             self._run_epoch(epoch)
             if self.gpu_id == 0 and epoch % self.save_every == 0:
                 self._save_snapshot(epoch)
+            dist.barrier()
+
+            epoch_val_loss = self._validate()
+
+            # Early Stopping Logic
+            if self.early_stopping:
+                if epoch_val_loss < self.best_val_loss:
+                    self.strikes = 0
+                    self.best_val_loss = epoch_val_loss
+                    # Saving the best model
+                    best_model_path = 'Best_Model.pt'
+                    torch.save(self.model.module.state_dict(), best_model_path)
+                    print(f"New best model saved with validation loss: {epoch_val_loss}")
+                else:
+                    self.strikes += 1
+
+                if self.strikes > self.patience:
+                    print('Stopping early due to no improvement.')
+                    self.finished = True
+                    break  # Exit the training loop
 
 
 def load_train_objs():
-    train_set = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # load your dataset
+    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # load your dataset
+    train_size = int(0.7 * len(full_dataset))
+    test_size = len(full_dataset) - train_size
+
+    # Split the dataset into training and test sets
+    train_set, test_set = random_split(full_dataset, [train_size, test_size])
     model = UNet()
     model.apply(init_weights)
+    model = model.double()
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
-    return train_set, model, optimizer
+    return train_set, test_set, model, optimizer
 
 
 def prepare_dataloader(dataset: Dataset, batch_size: int):
@@ -102,9 +164,11 @@ def prepare_dataloader(dataset: Dataset, batch_size: int):
 @record
 def main(save_every: int, total_epochs: int, batch_size: int, snapshot_path: str = "snapshot.pt"):
     ddp_setup()
-    dataset, model, optimizer = load_train_objs()
-    train_data = prepare_dataloader(dataset, batch_size)
-    trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path)
+    train_set, test_set, model, optimizer = load_train_objs()
+    train_data = prepare_dataloader(train_set, batch_size)
+    test_data = prepare_dataloader(test_set, batch_size)
+
+    trainer = Trainer(model, train_data, test_data, optimizer, save_every, snapshot_path)
     trainer.train(total_epochs)
     destroy_process_group()
 
