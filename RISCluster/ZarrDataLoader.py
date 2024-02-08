@@ -15,6 +15,12 @@ class ZarrDataset(Dataset):
         def __init__(self, transform=None):
             self.transform = transform
 
+            if transform is None:
+                transform_pipeline = transforms.Compose([
+                    ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
+                    lambda x: x.double(),
+                ])
+
         def __call__(self, X):
             X = X.to(torch.float32)  # Ensure the tensor is floating-point for division
             if self.transform == "sample_normalization":
@@ -39,7 +45,7 @@ class ZarrDataset(Dataset):
             X = np.expand_dims(X, axis=0)
             return torch.from_numpy(X)
 
-    def __init__(self, zarr_path, sample_size):
+    def __init__(self, zarr_path, sample_size, transform=None):
         # Open the Zarr dataset as an xarray Dataset, this will handle lazy loading
         #self.ds = xr.open_zarr(zarr_path, consolidated=True)
         #zarr_array = zarr.open(zarr_path, mode='r')
@@ -49,7 +55,7 @@ class ZarrDataset(Dataset):
         self.chunk_size = 5758
 
         self.sample_size = sample_size  # Size of each individual sample in the 'time' dimension
-        self.transform = transforms.Compose([ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent')])
+        self.transform = transform
 
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
