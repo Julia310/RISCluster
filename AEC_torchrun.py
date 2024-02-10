@@ -85,8 +85,8 @@ class Trainer:
         for batch in self.train_data:
             start_time = time()
             batch = batch.to(self.gpu_id)
-            #batch_size, mini_batch, channels, height, width = batch.size()
-            #batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
+            batch_size, mini_batch, channels, height, width = batch.size()
+            batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
             self._run_batch(batch, epoch)
             batch_time = time() - start_time
             print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
@@ -96,8 +96,9 @@ class Trainer:
         val_loss = 0.0
         with torch.no_grad():  # No need to track gradients during validation
             for batch in self.test_data:
+                batch = batch.to(self.gpu_id)
                 batch_size, mini_batch, channels, height, width = batch.size()
-                batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
+                batch = batch.view(batch_size * mini_batch, channels, height, width)
                 output, _ = self.model(batch)
                 loss = F.mse_loss(output, batch)
                 val_loss += loss.item() * batch.size(0)  # Aggregate the loss
@@ -175,7 +176,7 @@ def prepare_dataloader(dataset: Dataset, batch_size: int):
         num_workers=5,
         pin_memory=True,
         shuffle=False,
-        collate_fn=flatten_batch,
+        #collate_fn=flatten_batch,
         sampler=DistributedSampler(dataset)
     )
 
