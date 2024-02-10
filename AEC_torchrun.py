@@ -4,6 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
 from RISCluster.networks import AEC, init_weights, UNet
 import torch.distributed as dist
+from time import time
 from tqdm import tqdm
 import torch.multiprocessing as mp
 from torch.utils.data import random_split
@@ -63,16 +64,19 @@ class Trainer:
         loss = F.mse_loss(output, batch)
         loss.backward()
         self.optimizer.step()
-        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
+        #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
         print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
+            start_time = time()
             batch_size, mini_batch, channels, height, width = batch.size()
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
             self._run_batch(batch, epoch)
+            batch_time = time() - start_time
+            print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed in {batch_time:.4f} seconds")
 
     def _validate(self):
         self.model.eval()  # Set the model to evaluation mode
@@ -146,7 +150,7 @@ def load_train_objs():
     model = UNet()
     model.apply(init_weights)
     model = model.double()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     return train_set, test_set, model, optimizer
 
 
@@ -179,7 +183,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='simple distributed training job')
     parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
     parser.add_argument('save_every', type=int, help='How often to save a snapshot')
-    parser.add_argument('--batch_size', default=5, type=int, help='Input batch size on each device (default: 32)')
+    parser.add_argument('--batch_size', default=8, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
 
     main(args.save_every, args.total_epochs, args.batch_size)
