@@ -19,6 +19,18 @@ def ddp_setup():
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
+def flatten_batch(batch):
+    # Convert list of samples (batch) into a tensor
+    # Assuming each sample in the batch is a tensor of shape (mini_batch, channels, height, width)
+    batch_tensor = torch.stack(batch,
+                               dim=0)  # This creates a tensor of shape (batch_size, mini_batch, channels, height, width)
+
+    # Flatten the batch and mini_batch dimensions
+    batch_size, mini_batch, channels, height, width = batch_tensor.size()
+    flattened_batch = batch_tensor.view(batch_size * mini_batch, channels, height, width)
+
+    return flattened_batch
+
 
 class Trainer:
     def __init__(
@@ -68,15 +80,15 @@ class Trainer:
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
-        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
+        #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
             start_time = time()
-            batch_size, mini_batch, channels, height, width = batch.size()
-            batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
+            #batch_size, mini_batch, channels, height, width = batch.size()
+            #batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
             self._run_batch(batch, epoch)
             batch_time = time() - start_time
-            print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed in {batch_time:.4f} seconds")
+            print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
 
     def _validate(self):
         self.model.eval()  # Set the model to evaluation mode
@@ -155,12 +167,14 @@ def load_train_objs():
 
 
 def prepare_dataloader(dataset: Dataset, batch_size: int):
+
     return DataLoader(
         dataset,
         batch_size=batch_size,
         num_workers=5,
         pin_memory=True,
         shuffle=False,
+        collate_fn=flatten_batch,
         sampler=DistributedSampler(dataset)
     )
 
@@ -183,7 +197,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='simple distributed training job')
     parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
     parser.add_argument('save_every', type=int, help='How often to save a snapshot')
-    parser.add_argument('--batch_size', default=5, type=int, help='Input batch size on each device (default: 32)')
+    parser.add_argument('--batch_size', default=12, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
 
     main(args.save_every, args.total_epochs, args.batch_size)
