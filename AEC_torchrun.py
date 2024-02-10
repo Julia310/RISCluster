@@ -84,6 +84,7 @@ class Trainer:
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
             start_time = time()
+            batch = batch.to(self.gpu_id)
             #batch_size, mini_batch, channels, height, width = batch.size()
             #batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
             self._run_batch(batch, epoch)
