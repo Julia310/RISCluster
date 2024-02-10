@@ -55,6 +55,8 @@ class Trainer:
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, source, targets):
+        print(f"[GPU{self.gpu_id}] | source ({source.shape}) target {targets.shape}")
+
         self.optimizer.zero_grad()
         output = self.model(source)
         loss = F.cross_entropy(output, targets)
@@ -68,7 +70,7 @@ class Trainer:
         for source, targets in self.train_data:
             source = source.to(self.gpu_id)
             targets = targets.to(self.gpu_id)
-            print(source.shape, targets.shape)
+            #print(source.shape, targets.shape)
             self._run_batch(source, targets)
 
     def _save_snapshot(self, epoch):
