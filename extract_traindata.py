@@ -9,8 +9,10 @@ def read_and_write_zarr(source_zarr_path, target_zarr_path, sample_size):
     source_zarr_array = source_group[list(source_group.keys())[0]]
     source_ds = da.from_zarr(source_zarr_array)
 
+    chunk_size = 5758
+
     # Calculate the number of samples based on the dataset shape and sample size
-    num_samples = source_ds.shape[0] // sample_size * source_ds.shape[1]
+    num_samples = (source_ds.shape[0] // 11 * 2) // chunk_size * ((source_ds.shape[1] - 1600) // 5)
 
     # Create the target Zarr dataset
     target_group = zarr.open_group(target_zarr_path, mode='w')
@@ -21,9 +23,11 @@ def read_and_write_zarr(source_zarr_path, target_zarr_path, sample_size):
 
     # Process and write each chunk to the new Zarr dataset
     for idx in range(num_samples):
-        start_time = (idx * sample_size) % source_ds.shape[0]
-        end_time = start_time + sample_size
-        init_channel = (idx * sample_size) // source_ds.shape[0]
+
+        start_time = (idx * chunk_size) % (source_ds.shape[0] // 11 * 2)
+        end_time = start_time + chunk_size
+
+        init_channel = (idx * chunk_size) // (source_ds.shape[0] // 11 * 2) * 5 + 1600
 
         # Increment target_channel when init_channel changes
         if init_channel != prev_channel:
