@@ -57,9 +57,9 @@ class Trainer:
         self.best_val_loss = float('inf')
         self.strikes = 0
         self.finished = False
-        if os.path.exists(snapshot_path):
-            print("Loading snapshot")
-            self._load_snapshot(snapshot_path)
+        #if os.path.exists(snapshot_path):
+        #    print("Loading snapshot")
+        #    self._load_snapshot(snapshot_path)
 
         self.model = DDP(self.model, device_ids=[self.gpu_id], find_unused_parameters=True)
 
@@ -77,9 +77,11 @@ class Trainer:
         loss.backward()
         self.optimizer.step()
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
+        return loss.item()
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
+        loss_list = list()
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
@@ -87,9 +89,16 @@ class Trainer:
             batch = batch.to(self.gpu_id)
             batch_size, mini_batch, channels, height, width = batch.size()
             batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
-            self._run_batch(batch, epoch)
+            loss_list.append(self._run_batch(batch, epoch))
             batch_time = time() - start_time
-            print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
+            #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
+
+        # Calculate the average MSE loss for the epoch
+        avg_epoch_loss = sum(loss_list) / len(loss_list) if loss_list else 0.0
+
+        # Print the average MSE loss for the epoch (only from the master process)
+        if self.gpu_id == 0:
+            print(f"Epoch {epoch} | Average Loss: {avg_epoch_loss:.4f}")
 
     def _validate(self):
         self.model.eval()  # Set the model to evaluation mode
@@ -199,7 +208,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='simple distributed training job')
     parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
     parser.add_argument('save_every', type=int, help='How often to save a snapshot')
-    parser.add_argument('--batch_size', default=12, type=int, help='Input batch size on each device (default: 32)')
+    parser.add_argument('--batch_size', default=5, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
 
     main(args.save_every, args.total_epochs, args.batch_size)
