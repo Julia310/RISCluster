@@ -15,12 +15,6 @@ class ZarrDataset(Dataset):
         def __init__(self, transform=None):
             self.transform = transform
 
-            if transform is None:
-                transform_pipeline = transforms.Compose([
-                    ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
-                    lambda x: x.double(),
-                ])
-
         def __call__(self, X):
             X = X.to(torch.float32)  # Ensure the tensor is floating-point for division
             if self.transform == "sample_normalization":
@@ -59,29 +53,29 @@ class ZarrDataset(Dataset):
 
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
-        self.num_samples = self.ds.shape[0] // self.chunk_size * self.ds.shape[1]
+        self.num_samples = (self.ds.shape[0] // 11 * 2) // self.chunk_size * ((self.ds.shape[1] - 1600) // 5)
         self.spectrogram_size = 4
 
     def __len__(self):
         return self.num_samples
 
     def __getitem__(self, idx):
-        start_time = (idx * self.chunk_size) % self.ds.shape[0]
+        start_time = (idx * self.chunk_size) % (self.ds.shape[0] // 11 * 2)
         end_time = start_time + self.chunk_size
 
-        channel = (idx * self.chunk_size) // self.ds.shape[0]
+        channel = (idx * self.chunk_size) // (self.ds.shape[0] // 11 * 2) * 5 + 1600
 
         # Load the entire chunk
         chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double()
 
-        if self.transform is not None:
-            chunk = self.transform(chunk)
         # Split the chunk into spectrograms
         spectrograms = [chunk[i:i + self.spectrogram_size, :] for i in range(0, len(chunk), self.spectrogram_size)]
 
         # Process each spectrogram
         processed_spectrograms = []
         for spec in spectrograms:
+            if self.transform is not None:
+                spec = self.transform(spec)
             spec = spec.unsqueeze(0)
             if spec.shape[1] == 4:
                 processed_spectrograms.append(spec)
@@ -116,5 +110,4 @@ def get_zarr_data(split_dataset=True):
         return train_dataset, test_dataset
     else:
         return full_dataset
-
 
