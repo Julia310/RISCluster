@@ -156,12 +156,14 @@ class Trainer:
                     # Saving the best model
                     best_model_path = 'Best_Model.pt'
                     torch.save(self.model.module.state_dict(), best_model_path)
-                    print(f"New best model saved with validation loss: {epoch_val_loss}")
+                    if self.gpu_id == 0:
+                        print(f"New best model saved with validation loss: {epoch_val_loss}")
                 else:
                     self.strikes += 1
 
                 if self.strikes > self.patience:
-                    print('Stopping early due to no improvement.')
+                    if self.gpu_id == 0:
+                        print('Stopping early due to no improvement.')
                     self.finished = True
                     break  # Exit the training loop
 
