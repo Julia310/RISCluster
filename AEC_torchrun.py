@@ -72,7 +72,10 @@ class Trainer:
         self.epochs_run = snapshot["EPOCHS_RUN"]
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
-    def _run_batch(self, batch, epoch):
+    def _run_batch(self, batch):
+        batch = batch.to(self.gpu_id)
+        batch_size, mini_batch, channels, height, width = batch.size()
+        batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
         self.optimizer.zero_grad()
         output, _ = self.model(batch)
         #loss = F.mse_loss(output, batch)
@@ -80,27 +83,24 @@ class Trainer:
         loss.backward()
         self.optimizer.step()
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
-        return loss.item()
+        return loss
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
         running_loss = 0.0
-        running_size = 0
+        #running_size = 0
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
             start_time = time()
-            batch = batch.to(self.gpu_id)
-            batch_size, mini_batch, channels, height, width = batch.size()
-            batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
-            loss = self._run_batch(batch, epoch)
+            with torch.set_grad_enabled(True):
+                loss = self._run_batch(batch)
+            running_loss += loss.cpu().detach().numpy() * batch.size(0)
 
-            # Update running loss and size
-            running_loss += loss * batch_size * mini_batch  # Adjusted for the actual batch size used
-            running_size += batch_size * mini_batch
+            #running_size += batch.size(0)
             #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
 
-        avg_epoch_loss = running_loss / running_size
+        avg_epoch_loss = running_loss / len(self.train_data)
         if self.gpu_id == 0:
             print(f"Epoch {epoch} | Average Loss: {avg_epoch_loss:.4f}")
 
@@ -109,28 +109,21 @@ class Trainer:
         running_loss = 0.0
         running_size = 0
 
-        with torch.no_grad():  # No need to track gradients during validation
-            for batch in self.test_data:
-                batch = batch.to(self.gpu_id)
-                batch_size, mini_batch, channels, height, width = batch.size()
-                batch = batch.view(batch_size * mini_batch, channels, height, width)
-                output, _ = self.model(batch)
-                loss = self.metrics[0](output, batch).item()
-
-                # Update running loss and size
-                running_loss += loss * batch_size * mini_batch
-                running_size += batch_size * mini_batch
+        for batch in self.test_data:
+            with torch.no_grad():  # No need to track gradients during validation
+                loss = self._run_batch(batch)
+            running_loss += loss.cpu().detach().numpy() * batch.size(0)
 
         # Convert running loss and size to tensors for all_reduce operation
         running_loss_tensor = torch.tensor([running_loss], device=self.gpu_id)
-        running_size_tensor = torch.tensor([running_size], device=self.gpu_id)
+        #running_size_tensor = torch.tensor([running_size], device=self.gpu_id)
 
         # Use dist.all_reduce to sum the losses and sizes from all GPUs
         dist.all_reduce(running_loss_tensor, op=dist.ReduceOp.SUM)
-        dist.all_reduce(running_size_tensor, op=dist.ReduceOp.SUM)
+        #dist.all_reduce(running_size_tensor, op=dist.ReduceOp.SUM)
 
         # Compute the average loss across all GPUs and samples
-        avg_val_loss = running_loss_tensor.item() / running_size_tensor.item()
+        avg_val_loss = running_loss_tensor.item() / len(self.test_data)
 
         if self.gpu_id == 0:
             print(f"Validation Loss: {avg_val_loss:.4e}")
