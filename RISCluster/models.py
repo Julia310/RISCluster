@@ -161,7 +161,7 @@ def batch_training(model, dataloader, optimizer, metric, device):
             logging.info(f"Batch: {x.shape}")
 
         running_loss += loss.cpu().detach().numpy() * x.size(0)
-        logging.info("batch_size: { x.size(0)}")
+        logging.info(f"batch_size: { x.size(0)}")
         running_size += x.size(0)
 
         pbar.set_postfix(
