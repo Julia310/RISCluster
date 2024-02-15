@@ -96,11 +96,12 @@ class Trainer:
             start_time = time()
             with torch.set_grad_enabled(True):
                 loss = self._run_batch(batch)
-            running_loss += loss.item()
+            running_loss += loss.item() * batch.size(0) * batch.size(1)
+            running_size += batch.size(0) * batch.size(1)
             if self.gpu_id == 0:
                 print(f"Loss: {loss.cpu().detach().numpy():.4f}")
-                print(f"Running Loss: {running_loss:.4f}")
-                print(f"Batch size: {batch.size(0)}")
+                print(f"Running Loss: {running_loss / running_size:.4f}")
+                print(f"Batch size: {batch.size(0) * batch.size(1)}")
 
             running_size += batch.size(0)
             #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
@@ -117,18 +118,19 @@ class Trainer:
         for batch in self.test_data:
             with torch.no_grad():  # No need to track gradients during validation
                 loss = self._run_batch(batch)
-            running_loss += loss.item()
+            running_loss += loss.item() * batch.size(0) * batch.size(1)
+            running_size += batch.size(0) * batch.size(1)
 
         # Convert running loss and size to tensors for all_reduce operation
         running_loss_tensor = torch.tensor([running_loss], device=self.gpu_id)
-        #running_size_tensor = torch.tensor([running_size], device=self.gpu_id)
+        running_size_tensor = torch.tensor([running_size], device=self.gpu_id)
 
         # Use dist.all_reduce to sum the losses and sizes from all GPUs
         dist.all_reduce(running_loss_tensor, op=dist.ReduceOp.SUM)
-        #dist.all_reduce(running_size_tensor, op=dist.ReduceOp.SUM)
+        dist.all_reduce(running_size_tensor, op=dist.ReduceOp.SUM)
 
         # Compute the average loss across all GPUs and samples
-        avg_val_loss = running_loss_tensor.item() / len(self.test_data)
+        avg_val_loss = running_loss_tensor.item() / running_size_tensor.item()
 
         if self.gpu_id == 0:
             print(f"Validation Loss: {avg_val_loss:.4e}")
