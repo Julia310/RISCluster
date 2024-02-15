@@ -7,6 +7,8 @@ import torch.distributed as dist
 from time import time
 from tqdm import tqdm
 import torch.multiprocessing as mp
+from torchvision import transforms
+
 from torch.utils.data import random_split
 from torch.distributed.elastic.multiprocessing.errors import record
 from torch.utils.data.distributed import DistributedSampler
@@ -73,11 +75,16 @@ class Trainer:
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, batch):
+        print(batch)
         batch = batch.to(self.gpu_id)
         batch_size, mini_batch, channels, height, width = batch.size()
         batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
         self.optimizer.zero_grad()
         output, _ = self.model(batch)
+        print('==============================================')
+        print('==============================================')
+        print('==============================================')
+        print(output)
         #loss = F.mse_loss(output, batch)
         loss = self.metrics[0](output, batch)
         if loss.requires_grad:  # Check if loss requires gradients
@@ -178,7 +185,11 @@ class Trainer:
 
 
 def load_train_objs():
-    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # load your dataset
+    transform_pipeline = transforms.Compose([
+        ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
+        lambda x: x.double(),
+    ])
+    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4, transform=transform_pipeline)  # load your dataset
     train_size = int(0.7 * len(full_dataset))
     test_size = len(full_dataset) - train_size
 
