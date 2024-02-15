@@ -75,7 +75,7 @@ class Trainer:
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, batch):
-        print(batch)
+        print(batch[0])
         batch = batch.to(self.gpu_id)
         batch_size, mini_batch, channels, height, width = batch.size()
         batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
@@ -84,7 +84,7 @@ class Trainer:
         print('==============================================')
         print('==============================================')
         print('==============================================')
-        print(output)
+        print(output[0])
         #loss = F.mse_loss(output, batch)
         loss = self.metrics[0](output, batch)
         if loss.requires_grad:  # Check if loss requires gradients
