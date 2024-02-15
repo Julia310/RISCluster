@@ -80,8 +80,9 @@ class Trainer:
         output, _ = self.model(batch)
         #loss = F.mse_loss(output, batch)
         loss = self.metrics[0](output, batch)
-        loss.backward()
-        self.optimizer.step()
+        if loss.requires_grad:  # Check if loss requires gradients
+            loss.backward()
+            self.optimizer.step()
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
         return loss
 
