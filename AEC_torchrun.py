@@ -89,23 +89,23 @@ class Trainer:
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
         running_loss = 0.0
-        #running_size = 0
+        running_size = 0
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
             start_time = time()
             with torch.set_grad_enabled(True):
                 loss = self._run_batch(batch)
-            running_loss += loss.cpu().detach().numpy() * batch.size(0)
+            running_loss += loss.item()
             if self.gpu_id == 0:
                 print(f"Loss: {loss.cpu().detach().numpy():.4f}")
                 print(f"Running Loss: {running_loss:.4f}")
                 print(f"Batch size: {batch.size(0)}")
 
-            #running_size += batch.size(0)
+            running_size += batch.size(0)
             #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
 
-        avg_epoch_loss = running_loss / len(self.train_data)
+        avg_epoch_loss = running_loss / running_size
         if self.gpu_id == 0:
             print(f"Epoch {epoch} | Average Loss: {avg_epoch_loss:.4f}")
 
@@ -117,7 +117,7 @@ class Trainer:
         for batch in self.test_data:
             with torch.no_grad():  # No need to track gradients during validation
                 loss = self._run_batch(batch)
-            running_loss += loss.cpu().detach().numpy() * batch.size(0)
+            running_loss += loss.item()
 
         # Convert running loss and size to tensors for all_reduce operation
         running_loss_tensor = torch.tensor([running_loss], device=self.gpu_id)
