@@ -1,6 +1,10 @@
 from RISCluster.production import train
 from RISCluster import utils
 import os
+import logging
+
+
+logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
 
 # Main project folder to save outputs:
 project_folder = '.'

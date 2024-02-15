@@ -129,6 +129,7 @@ def batch_training(model, dataloader, optimizer, metric, device):
     epoch_loss : float
         Loss function value for the given epoch.
     '''
+    import logging
     model.train()
 
     running_loss = 0.0
@@ -156,11 +157,11 @@ def batch_training(model, dataloader, optimizer, metric, device):
             loss = metric(x_rec, x)
             loss.backward()
             optimizer.step()
-            print(f"Loss: {loss.item():.4f}")
-            print(f"Batch: {x.shape}")
+            logging.info(f"Loss: {loss.item():.4f}")
+            logging.info(f"Batch: {x.shape}")
 
         running_loss += loss.cpu().detach().numpy() * x.size(0)
-        print("batch_size: { x.size(0)}")
+        logging.info("batch_size: { x.size(0)}")
         running_size += x.size(0)
 
         pbar.set_postfix(
