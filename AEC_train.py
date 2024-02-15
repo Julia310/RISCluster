@@ -56,7 +56,7 @@ parameters = {
 }
 hyperparameters = {
     'batch_size': '128',
-    'lr': '0.0001, 0.001, 0.01'
+    'lr': '0.001'
 }
 init_path = utils.config_training(universal, parameters, hyperparameters)
 config_AEC = utils.Configuration(init_path)
