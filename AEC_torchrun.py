@@ -85,9 +85,6 @@ class Trainer:
         if loss.requires_grad:  # Check if loss requires gradients
             loss.backward()
             self.optimizer.step()
-        if self.gpu_id == 0:
-            print(f"Loss: {loss.item():.4f}")
-            print(f"Batch: {batch.shape}")
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
         return loss
 
@@ -103,11 +100,6 @@ class Trainer:
                 loss = self._run_batch(batch)
             running_loss += loss.item() * batch.size(0) * batch.size(1)
             running_size += batch.size(0) * batch.size(1)
-            if self.gpu_id == 0:
-                print(f"Running Loss: {running_loss / running_size:.4f}")
-                print(f"Batch size: {batch.size(0) * batch.size(1)}")
-
-            running_size += batch.size(0)
             #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
 
         avg_epoch_loss = running_loss / running_size
