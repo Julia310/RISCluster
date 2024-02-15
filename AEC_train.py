@@ -50,12 +50,12 @@ parameters = {
     'img_index': str(img_index)[1:-1],
     'tb': True,
     'tbport': 6999,
-    'workers': 1,
+    'workers': 5,
     'loadmode': 'ram',
     'datafiletype': 'h5'
 }
 hyperparameters = {
-    'batch_size': '128',
+    'batch_size': '5',
     'lr': '0.001'
 }
 init_path = utils.config_training(universal, parameters, hyperparameters)
