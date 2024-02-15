@@ -97,6 +97,10 @@ class Trainer:
             with torch.set_grad_enabled(True):
                 loss = self._run_batch(batch)
             running_loss += loss.cpu().detach().numpy() * batch.size(0)
+            if self.gpu_id == 0:
+                print(f"Loss: {loss.cpu().detach().numpy():.4f}")
+                print(f"Running Loss: {running_loss:.4f}")
+                print(f"Batch size: {batch.size(0)}")
 
             #running_size += batch.size(0)
             #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
