@@ -14,6 +14,11 @@ class ZarrDataset(Dataset):
     class SpecgramNormalizer(object):
         def __init__(self, transform=None):
             self.transform = transform
+            if self.transform is None:
+                self.transform = transforms.Compose([
+                    ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
+                    lambda x: x.double(),
+                ])
 
         def __call__(self, X):
             X = X.to(torch.float32)  # Ensure the tensor is floating-point for division
