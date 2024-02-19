@@ -152,6 +152,17 @@ class UNet(nn.Module):
         out = self.out(y)
         return out, x
 
+    def encoder(self, x):
+        down_1 = self.down_convolution_1(x)
+        down_2 = self.max_pool2d(down_1)
+        down_3 = self.down_convolution_2(down_2)
+        down_4 = self.max_pool2d(down_3)
+        down_5 = self.down_convolution_3(down_4)
+        down_6 = self.max_pool2d(down_5)
+        down_7 = self.down_convolution_4(down_6)
+        out = self.down_flatten(down_7)
+        return out
+
 
 # ======== This network is for data of dimension 100x87 (4 s) =================
 class SpatialAttentionModule(nn.Module):
