@@ -6,10 +6,9 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-
+from RISCluster.networks import UNet
 import torch
 from tqdm import tqdm
-
 
 def model_prediction(model, dataloader, saved_weights, device, output_save_path):
     '''
@@ -101,12 +100,11 @@ def view_TSNE(z_array, labels, title):
     return plt
 
 
-def init_clustering(saved_weights, n_clusters_list):
+def init_clustering(saved_weights, n_clusters_list, fname):
     """
     Initialize clustering with GMM and save cluster labels and centroids.
     """
     # Load dataset from saved latent space
-    fname = os.path.abspath(os.path.join(saved_weights, os.pardir, 'Prediction', 'Z_AEC.npy'))
     dataset = np.load(fname)
     print(f'Dataset has {len(dataset)} samples.')
 
@@ -136,5 +134,8 @@ def init_clustering(saved_weights, n_clusters_list):
 dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # Update path and transform as needed
 dataloader = DataLoader(dataset, batch_size=5, shuffle=False)
 saved_weights = './preliminary_weights/Best_Model.pt'
+fname = os.path.abspath(os.path.join(saved_weights, os.pardir, 'Prediction', 'Z_AEC.npy'))
+
+model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
 n_clusters_list = [4, 6, 8, 10, 12, 14]  # Example cluster sizes to try
-init_clustering(saved_weights, n_clusters_list)
+init_clustering(saved_weights, n_clusters_list, fname)
