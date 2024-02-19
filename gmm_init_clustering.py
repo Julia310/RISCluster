@@ -42,6 +42,7 @@ def model_prediction(model, dataloader, saved_weights, device, output_save_path)
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Processing", unit="batch"):
+            print(batch.shape)
             batch, _ = batch
             batch_size, mini_batch, channels, height, width = batch.size()
             inputs = batch.view(batch_size * mini_batch, channels, height, width)
