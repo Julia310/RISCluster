@@ -7,6 +7,8 @@ import torch.distributed as dist
 from time import time
 from tqdm import tqdm
 import torch.multiprocessing as mp
+from torchvision import transforms
+
 from torch.utils.data import random_split
 from torch.distributed.elastic.multiprocessing.errors import record
 from torch.utils.data.distributed import DistributedSampler
@@ -80,27 +82,27 @@ class Trainer:
         output, _ = self.model(batch)
         #loss = F.mse_loss(output, batch)
         loss = self.metrics[0](output, batch)
-        loss.backward()
-        self.optimizer.step()
+        if loss.requires_grad:  # Check if loss requires gradients
+            loss.backward()
+            self.optimizer.step()
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
         return loss
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
         running_loss = 0.0
-        #running_size = 0
+        running_size = 0
         #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
             start_time = time()
             with torch.set_grad_enabled(True):
                 loss = self._run_batch(batch)
-            running_loss += loss.cpu().detach().numpy() * batch.size(0)
-
-            #running_size += batch.size(0)
+            running_loss += loss.item() * batch.size(0) * batch.size(1)
+            running_size += batch.size(0) * batch.size(1)
             #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch ({batch.shape}) processed in {batch_time:.4f} seconds")
 
-        avg_epoch_loss = running_loss / len(self.train_data)
+        avg_epoch_loss = running_loss / running_size
         if self.gpu_id == 0:
             print(f"Epoch {epoch} | Average Loss: {avg_epoch_loss:.4f}")
 
@@ -112,18 +114,19 @@ class Trainer:
         for batch in self.test_data:
             with torch.no_grad():  # No need to track gradients during validation
                 loss = self._run_batch(batch)
-            running_loss += loss.cpu().detach().numpy() * batch.size(0)
+            running_loss += loss.item() * batch.size(0) * batch.size(1)
+            running_size += batch.size(0) * batch.size(1)
 
         # Convert running loss and size to tensors for all_reduce operation
         running_loss_tensor = torch.tensor([running_loss], device=self.gpu_id)
-        #running_size_tensor = torch.tensor([running_size], device=self.gpu_id)
+        running_size_tensor = torch.tensor([running_size], device=self.gpu_id)
 
         # Use dist.all_reduce to sum the losses and sizes from all GPUs
         dist.all_reduce(running_loss_tensor, op=dist.ReduceOp.SUM)
-        #dist.all_reduce(running_size_tensor, op=dist.ReduceOp.SUM)
+        dist.all_reduce(running_size_tensor, op=dist.ReduceOp.SUM)
 
         # Compute the average loss across all GPUs and samples
-        avg_val_loss = running_loss_tensor.item() / len(self.test_data)
+        avg_val_loss = running_loss_tensor.item() / running_size_tensor.item()
 
         if self.gpu_id == 0:
             print(f"Validation Loss: {avg_val_loss:.4e}")
@@ -169,7 +172,11 @@ class Trainer:
 
 
 def load_train_objs():
-    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # load your dataset
+    transform_pipeline = transforms.Compose([
+        ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
+        lambda x: x.double(),
+    ])
+    full_dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4, transform=transform_pipeline)  # load your dataset
     train_size = int(0.7 * len(full_dataset))
     test_size = len(full_dataset) - train_size
 

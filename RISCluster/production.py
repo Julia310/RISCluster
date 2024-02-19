@@ -18,7 +18,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Subset
 
 from RISCluster import models, utils
-from RISCluster.networks import AEC, DEC, init_weights
+from RISCluster.networks import AEC, DEC, init_weights, UNet
 from RISCluster.ZarrDataLoader import get_zarr_data
 
 
@@ -78,7 +78,7 @@ def predict(config):
 
     if config.model == 'AEC':
 
-        model = AEC().to(config.device)
+        model = UNet().to(config.device)
 
         metrics = [nn.MSELoss(reduction='mean')]
 

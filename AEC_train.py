@@ -1,6 +1,10 @@
 from RISCluster.production import train
 from RISCluster import utils
 import os
+import logging
+
+
+logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
 
 # Main project folder to save outputs:
 project_folder = '.'
@@ -50,13 +54,13 @@ parameters = {
     'img_index': str(img_index)[1:-1],
     'tb': True,
     'tbport': 6999,
-    'workers': 1,
+    'workers': 5,
     'loadmode': 'ram',
     'datafiletype': 'h5'
 }
 hyperparameters = {
-    'batch_size': '128',
-    'lr': '0.0001, 0.001, 0.01'
+    'batch_size': '5',
+    'lr': '0.001'
 }
 init_path = utils.config_training(universal, parameters, hyperparameters)
 config_AEC = utils.Configuration(init_path)
