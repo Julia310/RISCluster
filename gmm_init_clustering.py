@@ -56,9 +56,8 @@ def model_prediction(model, dataloader, saved_weights, device, output_save_path)
     if not os.path.exists(output_save_path):
         os.makedirs(output_save_path, exist_ok=True)
 
-    latent_space_file = os.path.join(output_save_path, 'Z_AEC.npy')
-    np.save(latent_space_file, z_array)
-    print(f'Latent space representations saved to {latent_space_file}')
+    np.save(output_save_path, z_array)
+    print(f'Latent space representations saved to {output_save_path}')
 
 
 def gmm(z_array, n_clusters):
@@ -135,6 +134,6 @@ dataloader = DataLoader(dataset, batch_size=5, shuffle=False, num_workers=5, pin
 saved_weights = './preliminary_weights/Best_Model.pt'
 fname = os.path.abspath(os.path.join(saved_weights, os.pardir, 'Prediction', 'Z_AEC.npy'))
 
-model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
+#model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
 n_clusters_list = [4, 6, 8, 10, 12, 14]  # Example cluster sizes to try
 init_clustering(saved_weights, n_clusters_list, fname)
