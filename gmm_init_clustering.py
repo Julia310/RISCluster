@@ -131,7 +131,7 @@ def init_clustering(saved_weights, n_clusters_list, fname):
 # Example usage
 # Prepare your dataset and dataloader
 dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # Update path and transform as needed
-dataloader = DataLoader(dataset, batch_size=5, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=5, shuffle=False, num_workers=5, pin_memory=True)
 saved_weights = './preliminary_weights/Best_Model.pt'
 fname = os.path.abspath(os.path.join(saved_weights, os.pardir, 'Prediction', 'Z_AEC.npy'))
 
