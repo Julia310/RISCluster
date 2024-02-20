@@ -6,6 +6,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+from torchvision import transforms
 from RISCluster.networks import UNet
 import torch
 from tqdm import tqdm
@@ -129,11 +130,16 @@ def init_clustering(saved_weights, n_clusters_list, fname):
 
 # Example usage
 # Prepare your dataset and dataloader
-dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4)  # Update path and transform as needed
+transform_pipeline = transforms.Compose([
+    ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
+    lambda x: x.double(),
+])
+dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4,
+                           transform=transform_pipeline)
 dataloader = DataLoader(dataset, batch_size=5, shuffle=False, num_workers=5, pin_memory=True)
 saved_weights = './preliminary_weights/Best_Model.pt'
 fname = os.path.abspath(os.path.join(saved_weights, os.pardir, 'Prediction', 'Z_AEC.npy'))
 
-#model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
+model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
 n_clusters_list = [4, 6, 8, 10, 12, 14]  # Example cluster sizes to try
 init_clustering(saved_weights, n_clusters_list, fname)
