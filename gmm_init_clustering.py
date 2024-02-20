@@ -54,10 +54,10 @@ def model_prediction(model, dataloader, saved_weights, device, output_save_path)
 
     z_array = np.concatenate(z_array, axis=0)
 
-    if not os.path.exists(output_save_path):
-        os.makedirs(output_save_path, exist_ok=True)
+    os.makedirs(output_save_path, exist_ok=True)
+    os.makedirs(os.path.join(output_save_path, os.pardir, 'GMM'), exist_ok=True)
 
-    np.save(output_save_path, z_array)
+    np.save(os.path.join(output_save_path, 'Z_AEC.npy'), z_array)
     print(f'Latent space representations saved to {output_save_path}')
 
 
@@ -104,7 +104,7 @@ def init_clustering(saved_weights, n_clusters_list, fname):
     Initialize clustering with GMM and save cluster labels and centroids.
     """
     # Load dataset from saved latent space
-    dataset = np.load(fname)
+    dataset = np.load(os.path.join(fname, 'Z_AEC.npy'))
     print(f'Dataset has {len(dataset)} samples.')
 
     savepath_exp = os.path.abspath(os.path.join(saved_weights, os.pardir, 'GMM'))
@@ -138,8 +138,8 @@ dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zar
                            transform=transform_pipeline)
 dataloader = DataLoader(dataset, batch_size=5, shuffle=False, num_workers=5, pin_memory=True)
 saved_weights = './preliminary_weights/Best_Model.pt'
-fname = os.path.abspath(os.path.join(saved_weights, os.pardir, 'Prediction', 'Z_AEC.npy'))
-
+fname = os.path.abspath(os.path.join('./preliminary_weights', 'Prediction'))
+print(fname)
 model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
 n_clusters_list = [4, 6, 8, 10, 12, 14]  # Example cluster sizes to try
 init_clustering(saved_weights, n_clusters_list, fname)
