@@ -58,7 +58,7 @@ def model_prediction(model, dataloader, saved_weights, device, output_save_path)
 
     z_array = np.concatenate(z_array, axis=0)
 
-    logging.info(f" create dir: {fname})")
+    logging.info(f"create dir: {fname}")
     os.makedirs(output_save_path, exist_ok=True)
     os.makedirs(os.path.join(output_save_path, os.pardir, 'GMM'), exist_ok=True)
 
@@ -139,11 +139,11 @@ transform_pipeline = transforms.Compose([
     ZarrDataset.SpecgramNormalizer(transform='sample_norm_cent'),
     lambda x: x.double(),
 ])
-dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4,
-                           transform=transform_pipeline)
-dataloader = DataLoader(dataset, batch_size=5, shuffle=False, num_workers=5, pin_memory=True)
+#dataset = ZarrDataset('/work/users/jp348bcyy/rhoneDataCube/Cube_chunked_5758.zarr', 4,
+#                           transform=transform_pipeline)
+#dataloader = DataLoader(dataset, batch_size=5, shuffle=False, num_workers=5, pin_memory=True)
 saved_weights = './preliminary_weights/Best_Model.pt'
 fname = os.path.abspath(os.path.join('./preliminary_weights', 'Prediction'))
-model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
+#model_prediction(UNet(), dataloader, saved_weights, 'cuda', fname)
 n_clusters_list = [4, 6, 8, 10, 12, 14]  # Example cluster sizes to try
 init_clustering(saved_weights, n_clusters_list, fname)
