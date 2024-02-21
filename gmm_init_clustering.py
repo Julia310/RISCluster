@@ -8,6 +8,7 @@ import os
 import numpy as np
 from torchvision import transforms
 from RISCluster.networks import UNet
+from sklearn.metrics import silhouette_score
 import torch
 from tqdm import tqdm
 import logging
@@ -71,10 +72,12 @@ def gmm(z_array, n_clusters):
     Initialize clusters using Gaussian Mixture Model algorithm.
     """
     # Initialize with K-Means
-    km = KMeans(n_clusters=n_clusters, max_iter=1000, n_init=100, random_state=2009)
-    km.fit_predict(z_array)
+    km = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=1000, n_init=100, random_state=2009)
+    gmm_labels = km.fit_predict(z_array)
     labels = km.labels_
     centroids = km.cluster_centers_
+    wcss = km.inertia_
+    silhouette_avg = silhouette_score(z_array, gmm_labels)
 
     # Estimate initial GMM weights
     labels_unique, counts = np.unique(labels, return_counts=True)
@@ -87,7 +90,31 @@ def gmm(z_array, n_clusters):
     np.seterr(under='ignore')
     labels = GMM.fit_predict(z_array)
     centroids = GMM.means_
-    return labels, centroids
+    return labels, centroids, wcss, silhouette_avg
+
+
+def plot_silhouette_scores(n_clusters_list, silhouette_scores):
+    """
+    Plot silhouette scores against number of clusters.
+    """
+    plt.figure()
+    plt.plot(n_clusters_list, silhouette_scores, 'bx-')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('Silhouette score')
+    plt.title('Silhouette analysis For Optimal k')
+    return plt
+
+def plot_elbow_method(n_clusters_list, wcss):
+    """
+    Plot the elbow method graph.
+    """
+    plt.figure()
+    plt.plot(n_clusters_list, wcss, 'bx-')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')
+    plt.title('The Elbow Method showing the optimal k')
+    return plt
+
 
 def view_TSNE(z_array, labels, title):
     """
@@ -108,19 +135,26 @@ def init_clustering(saved_weights, n_clusters_list, fname):
     """
     Initialize clustering with GMM and save cluster labels and centroids.
     """
+
+    silhouette_scores = []
+    wcss_list = []
+
     # Load dataset from saved latent space
     dataset = np.load(os.path.join(fname, 'Z_AEC.npy'))
-    print(f'Dataset has {len(dataset)} samples.')
+    logging.info(f'Dataset has {len(dataset)} samples.')
 
     savepath_exp = os.path.abspath(os.path.join(saved_weights, os.pardir, 'GMM'))
     os.makedirs(savepath_exp, exist_ok=True)
 
     for n_clusters in n_clusters_list:
-        print('-'*100)
-        print(f'GMM Run: n_clusters={n_clusters}')
-        print('-' * 25)
+        logging.info('-'*100)
+        logging.info(f'GMM Run: n_clusters={n_clusters}')
+        logging.info('-' * 25)
 
-        labels, centroids = gmm(dataset, n_clusters)
+        labels, centroids, wcss, silhouette_avg = gmm(dataset, n_clusters)
+        silhouette_scores.append(silhouette_avg)
+        wcss_list.append(wcss)
+
 
         # Save labels and centroids
         np.save(os.path.join(savepath_exp, f'labels_{n_clusters}.npy'), labels)
@@ -131,7 +165,13 @@ def init_clustering(saved_weights, n_clusters_list, fname):
         fig.savefig(os.path.join(savepath_exp, f't-SNE_{n_clusters}.png'), dpi=300)
         plt.close(fig)
 
-        print(f'GMM clustering with {n_clusters} clusters complete and saved.')
+        logging.info(f'GMM clustering with {n_clusters} clusters complete and saved.')
+    fig = plot_silhouette_scores(n_clusters_list, silhouette_scores)
+    fig.savefig(os.path.join(savepath_exp, f'silhouette.png'), dpi=300)
+    plt.close(fig)
+    fig = plot_elbow_method(n_clusters_list, wcss)
+    fig.savefig(os.path.join(savepath_exp, f'wcss.png'), dpi=300)
+    plt.close(fig)
 
 # Example usage
 # Prepare your dataset and dataloader
