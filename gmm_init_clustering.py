@@ -12,6 +12,12 @@ from sklearn.metrics import silhouette_score
 import torch
 from tqdm import tqdm
 import logging
+from pyspark.sql import SparkSession
+from pyspark.ml.linalg import Vectors
+import numpy as np
+from pyspark.ml.clustering import KMeans
+from pyspark.ml.evaluation import ClusteringEvaluator
+from pyspark.ml.clustering import GaussianMixture
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -91,6 +97,41 @@ def gmm(z_array, n_clusters):
     labels = GMM.fit_predict(z_array)
     centroids = GMM.means_
     return labels, centroids, wcss, silhouette_avg
+
+
+def distributed_gmm(z_array, n_clusters):
+    # Convert to DataFrame as shown in Step 1
+    spark = SparkSession.builder.appName("NumPy Array to GMM").getOrCreate()
+    rdd = spark.sparkContext.parallelize(z_array.tolist())
+    df = rdd.map(lambda x: (Vectors.dense(x),)).toDF(["features"])
+
+    # Apply KMeans and calculate WCSS and silhouette as shown in Step 2
+    kmeans = KMeans(k=n_clusters, seed=2009, featuresCol="features")
+    km_model = kmeans.fit(df)
+    km_predictions = km_model.transform(df)
+
+    # Calculate WCSS (Within-Cluster Sum of Square)
+    wcss = km_model.summary.trainingCost
+
+    # Calculate silhouette score
+    evaluator = ClusteringEvaluator(featuresCol="features", metricName="silhouette", distanceMeasure="squaredEuclidean")
+    silhouette_avg = evaluator.evaluate(km_predictions)
+
+    # Extract centroids
+    centroids = km_model.clusterCenters()
+
+    # Fit GMM and extract labels as shown in Step 3
+    gmm = GaussianMixture(k=n_clusters, maxIter=1000, featuresCol="features")
+    gmm_model = gmm.fit(df)
+    gmm_predictions = gmm_model.transform(df)
+
+    # Extract labels
+    labels = gmm_predictions.select("prediction").rdd.flatMap(lambda x: x).collect()
+
+    # Note: Directly returning WCSS for GMM is not supported in PySpark. The WCSS value here is from KMeans.
+    # Centroids returned are from KMeans due to PySpark GMM limitations in extracting such detailed info.
+
+    return np.array(labels), np.vstack(centroids), wcss, silhouette_avg
 
 
 def plot_silhouette_scores(n_clusters_list, silhouette_scores):
