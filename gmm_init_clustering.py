@@ -192,7 +192,7 @@ def init_clustering(saved_weights, n_clusters_list, fname):
         logging.info(f'GMM Run: n_clusters={n_clusters}')
         logging.info('-' * 25)
 
-        labels, centroids, wcss, silhouette_avg = gmm(dataset, n_clusters)
+        labels, centroids, wcss, silhouette_avg = distributed_gmm(dataset, n_clusters)
         silhouette_scores.append(silhouette_avg)
         wcss_list.append(wcss)
 
