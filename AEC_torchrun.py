@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
 from RISCluster.networks import AEC, init_weights, UNet
+from RISCluster.vit_transformer import CAE
 import torch.distributed as dist
 from time import time
 from tqdm import tqdm
@@ -60,7 +61,7 @@ class Trainer:
         self.best_val_loss = float('inf')
         self.strikes = 0
         self.finished = False
-        self.metrics = metrics if metrics is not None else [torch.nn.MSELoss(reduction='mean')]
+        #self.metrics = metrics if metrics is not None else [torch.nn.MSELoss(reduction='mean')]
         #if os.path.exists(snapshot_path):
         #    print("Loading snapshot")
         #    self._load_snapshot(snapshot_path)
@@ -79,9 +80,9 @@ class Trainer:
         batch_size, mini_batch, channels, height, width = batch.size()
         batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
         self.optimizer.zero_grad()
-        output, _ = self.model(batch)
+        loss = self.model(batch)
         #loss = F.mse_loss(output, batch)
-        loss = self.metrics[0](output, batch)
+        #loss = self.metrics[0](output, batch)
         if loss.requires_grad:  # Check if loss requires gradients
             loss.backward()
             self.optimizer.step()
@@ -182,7 +183,7 @@ def load_train_objs():
 
     # Split the dataset into training and test sets
     train_set, test_set = random_split(full_dataset, [train_size, test_size])
-    model = UNet()
+    model = CAE()
     model.apply(init_weights)
     model = model.double()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
