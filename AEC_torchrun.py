@@ -76,6 +76,7 @@ class Trainer:
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, batch):
+        start_batch = time()
         batch = batch.to(self.gpu_id)
         batch_size, mini_batch, channels, height, width = batch.size()
         batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
@@ -86,7 +87,8 @@ class Trainer:
         if loss.requires_grad:  # Check if loss requires gradients
             loss.backward()
             self.optimizer.step()
-        #print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batch processed")
+        if self.gpu_id == 0:
+            print(f"[GPU{self.gpu_id}] Batch processed: {time() - start_batch}")
         return loss
 
     def _run_epoch(self, epoch):
