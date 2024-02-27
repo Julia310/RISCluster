@@ -121,7 +121,7 @@ def up_linear(out_features):
     return conv_op
 
 class ViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 1, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 1, dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
         image_height = 4
         image_width = 101
@@ -180,14 +180,11 @@ class CAE(nn.Module):
             *,
             encoder,
             decoder_dim,
-            masking_ratio=0.75,
             decoder_depth=1,
             decoder_heads=8,
             decoder_dim_head=64
     ):
         super().__init__()
-        assert masking_ratio > 0 and masking_ratio <= 1, 'masking ratio must be kept between 0 and 1'
-        self.masking_ratio = masking_ratio
 
         # extract some hyperparameters and functions from encoder (vision transformer to be trained)
 
@@ -249,8 +246,6 @@ class CAE(nn.Module):
 
 
 v = ViT(
-    image_size = 256,
-    patch_size = 32,
     num_classes = 1000,
     dim = 1024,
     depth = 6,
@@ -260,8 +255,7 @@ v = ViT(
 
 mae = CAE(
     encoder = v,
-    masking_ratio = 1.,   # the paper recommended 75% masked patches
-    decoder_dim = 512,      # paper showed good results with just 512
+    decoder_dim = 128,      # paper showed good results with just 512
     decoder_depth = 6       # anywhere from 1 to 8
 )
 
