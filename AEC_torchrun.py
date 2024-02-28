@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
 from Models.networks import init_weights
-from Models.vit_transformer import CAE, ViT
+from Models.AEC_CBAM import AEC
 import torch.distributed as dist
 from time import time
 from torchvision import transforms
@@ -182,19 +182,8 @@ def load_train_objs():
 
     # Split the dataset into training and test sets
     train_set, test_set = random_split(full_dataset, [train_size, test_size])
-    v = ViT(
-        num_classes=1000,
-        dim=1024,
-        depth=6,
-        heads=8,
-        mlp_dim=2048
-    )
 
-    model = CAE(
-        encoder=v,
-        decoder_dim=128,  # paper showed good results with just 512
-        decoder_depth=6  # anywhere from 1 to 8
-    )
+    model = AEC()
     model.apply(init_weights)
     model = model.double()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
