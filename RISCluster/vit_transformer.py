@@ -94,8 +94,8 @@ def down_linear(in_features):
         #nn.Sigmoid(),
         nn.Linear(in_features // 64, in_features // 128),
         nn.Sigmoid(),
-        nn.Linear(in_features // 128, in_features // 512),
-        nn.Sigmoid(),
+        #nn.Linear(in_features // 128, in_features // 512),
+        #nn.Sigmoid(),
 
     )
     return conv_op
@@ -106,8 +106,8 @@ def up_linear(out_features):
         #nn.Sigmoid(),
         #nn.Linear(out_features // 128, out_features // 64),
         #nn.Sigmoid(),
-        nn.Linear(out_features // 512, out_features // 128),
-        nn.Sigmoid(),
+        #nn.Linear(out_features // 512, out_features // 128),
+        #nn.Sigmoid(),
         nn.Linear(out_features // 128, out_features // 64),
         nn.Sigmoid(),
         nn.Linear(out_features // 64, out_features // 16),
@@ -125,14 +125,14 @@ class ViT(nn.Module):
         super().__init__()
         image_height = 4
         image_width = 101
-        patch_height = 1
+        patch_height = 4
         patch_width = 101
         print((patch_height, patch_width))
 
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 
-        num_patches = (image_height // patch_height) * (image_width // patch_width)
+        #num_patches = (image_height // patch_height) * (image_width // patch_width)
         patch_dim = channels * patch_height * patch_width
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
@@ -143,7 +143,7 @@ class ViT(nn.Module):
             nn.LayerNorm(dim),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
+        #self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.dropout = nn.Dropout(emb_dropout)
 
@@ -163,7 +163,7 @@ class ViT(nn.Module):
 
         cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b = b)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
+        #x += self.pos_embedding[:, :(n + 1)]
         x = self.dropout(x)
 
         x = self.transformer(x)
