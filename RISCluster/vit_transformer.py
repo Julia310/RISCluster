@@ -116,7 +116,7 @@ def up_linear(out_features):
         nn.Sigmoid(),
         nn.Linear(out_features // 4, out_features),
         nn.Sigmoid(),
-        nn.Unflatten(1, (4, 1024))
+        nn.Unflatten(1, (1, 1024))
     )
     return conv_op
 
@@ -132,7 +132,7 @@ class ViT(nn.Module):
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 
-        #num_patches = (image_height // patch_height) * (image_width // patch_width)
+        num_patches = (image_height // patch_height) * (image_width // patch_width)
         patch_dim = channels * patch_height * patch_width
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
@@ -163,7 +163,7 @@ class ViT(nn.Module):
 
         cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b = b)
         x = torch.cat((cls_tokens, x), dim=1)
-        #x += self.pos_embedding[:, :(n + 1)]
+        x += self.pos_embedding[:, :(n + 1)]
         x = self.dropout(x)
 
         x = self.transformer(x)
@@ -189,7 +189,7 @@ class CAE(nn.Module):
         # extract some hyperparameters and functions from encoder (vision transformer to be trained)
 
         self.encoder = encoder
-        num_patches, encoder_dim = encoder.pos_embedding.shape[-2:]
+        #num_patches, encoder_dim = encoder.pos_embedding.shape[-2:]
 
         self.to_patch = encoder.to_patch_embedding[0]
         self.patch_to_emb = nn.Sequential(*encoder.to_patch_embedding[1:])
@@ -198,14 +198,16 @@ class CAE(nn.Module):
 
         # decoder parameters
         self.decoder_dim = decoder_dim
-        self.enc_to_dec = nn.Linear(encoder_dim, decoder_dim) if encoder_dim != decoder_dim else nn.Identity()
+        self.enc_to_dec = nn.Linear(1024, decoder_dim) #if encoder_dim != decoder_dim else nn.Identity()
+
+        #print(f'encoder dim: {encoder_dim}, decoder dim: {decoder_dim}')
         self.mask_token = nn.Parameter(torch.randn(decoder_dim))
         self.decoder = Transformer(dim=decoder_dim, depth=decoder_depth, heads=decoder_heads, dim_head=decoder_dim_head,
                                    mlp_dim=decoder_dim * 4)
-        self.decoder_pos_emb = nn.Embedding(num_patches, decoder_dim)
+        #self.decoder_pos_emb = nn.Embedding(num_patches, decoder_dim)
         self.to_pixels = nn.Linear(decoder_dim, pixel_values_per_patch)
-        self.down_flatten = down_linear(1024*4)
-        self.up_flatten = up_linear(1024 * 4)
+        self.down_flatten = down_linear(1024)
+        self.up_flatten = up_linear(1024)
 
 
     def forward(self, img):
@@ -219,28 +221,28 @@ class CAE(nn.Module):
         # patch to encoder tokens and add positions
 
         tokens = self.patch_to_emb(patches)
-        if self.encoder.pool == "cls":
-            tokens += self.encoder.pos_embedding[:, 1:(num_patches + 1)]
-        elif self.encoder.pool == "mean":
-            tokens += self.encoder.pos_embedding.to(device, dtype=tokens.dtype)
+        #if self.encoder.pool == "cls":
+        #    tokens += self.encoder.pos_embedding[:, 1:(num_patches + 1)]
+        #elif self.encoder.pool == "mean":
+        #    tokens += self.encoder.pos_embedding.to(device, dtype=tokens.dtype)
 
         # attend with vision transformer
 
         encoded_tokens = self.encoder.transformer(tokens)
-
+        #print(encoded_tokens.shape)
         down_features = self.down_flatten(encoded_tokens)
         #print(down_features.shape)
         up_features = self.up_flatten(down_features)
-
-
-        # project encoder to decoder dimensions, if they are not equal - the paper says you can get away with a smaller dimension for decoder
-
+#
+#
+        ## project encoder to decoder dimensions, if they are not equal - the paper says you can get away with a smaller dimension for decoder
+#
         decoder_tokens = self.enc_to_dec(up_features)
-
+#
         pred_pixel_values = self.to_pixels(decoder_tokens)
-
-        # calculate reconstruction loss
-
+#
+        ## calculate reconstruction loss
+#
         recon_loss = F.mse_loss(pred_pixel_values, patches)
         return recon_loss
 
