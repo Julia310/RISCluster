@@ -9,7 +9,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import os
 import torch.distributed as dist
-from RISCluster.networks import AEC, init_weights
+from Models.networks import AEC, init_weights
 import logging
 # Suppress specific c10d warnings
 import warnings

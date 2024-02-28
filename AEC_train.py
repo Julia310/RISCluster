@@ -15,7 +15,7 @@ path_data = f"{project_folder}/Data"
 # Path to raw seismic data:
 # path_data_seismo = f"{path_data}/Seismo"
 path_data_seismo = "./zdata2/data/wfjenkin/RIS_Seismic"
-# Path to save workflow outputs (ML models, figures, results, etc.)
+# Path to save workflow outputs (ML Models, figures, results, etc.)
 path_output = f"{project_folder}/Outputs"
 # Path to HDF dataset:
 fname_dataset = f"{path_data}/RISData_20210713.h5"

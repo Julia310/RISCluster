@@ -1,13 +1,10 @@
 import torch
-import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
-from RISCluster.networks import AEC, init_weights, UNet
-from RISCluster.vit_transformer import CAE, ViT
+from Models.networks import init_weights
+from Models.vit_transformer import CAE, ViT
 import torch.distributed as dist
 from time import time
-from tqdm import tqdm
-import torch.multiprocessing as mp
 from torchvision import transforms
 
 from torch.utils.data import random_split
@@ -87,8 +84,8 @@ class Trainer:
         if loss.requires_grad:  # Check if loss requires gradients
             loss.backward()
             self.optimizer.step()
-        if self.gpu_id == 0:
-            print(f"[GPU{self.gpu_id}] Batch processed: {time() - start_batch}")
+        #if self.gpu_id == 0:
+        #    print(f"[GPU{self.gpu_id}] Batch processed: {time() - start_batch}")
         return loss
 
     def _run_epoch(self, epoch):

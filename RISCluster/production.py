@@ -15,10 +15,10 @@ import os
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 
-from RISCluster import models, utils
-from RISCluster.networks import AEC, DEC, init_weights, UNet
+from RISCluster import models
+from Models.networks import AEC, DEC, init_weights, UNet
 from RISCluster.ZarrDataLoader import get_zarr_data
 
 

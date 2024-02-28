@@ -7,7 +7,7 @@ May 2021
 
 This script provides a command-line interface entry point for the RIS
 clustering workflow, and is the primary script that performs 
-pre-training and training of the deep clustering models.
+pre-training and training of the deep clustering Models.
 """
 
 import argparse
@@ -24,7 +24,7 @@ from RISCluster.utils import Configuration, notify
 
 def main(init_path=None, cuda_device=None):
     """This command line function is the primary script that performs
-    pre-training and training of the deep embedded clustering models.
+    pre-training and training of the deep embedded clustering Models.
 
     Parameters
     ----------

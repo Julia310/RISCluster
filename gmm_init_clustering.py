@@ -1,14 +1,10 @@
-from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from RISCluster.ZarrDataLoader import ZarrDataset
 from sklearn.cluster import MiniBatchKMeans
-from torch.utils.data import DataLoader
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import os
-import numpy as np
 from torchvision import transforms
-from RISCluster.networks import UNet
 from sklearn.metrics import silhouette_score
 import torch
 from tqdm import tqdm

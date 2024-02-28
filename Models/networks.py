@@ -142,7 +142,7 @@ class UNet(nn.Module):
         down_8 = self.down_flatten(down_7)
 
         up_0 = self.up_unflatten(down_8)
-        y = self.up_convolution_1(torch.cat([down_7, up_0], 1))
+        #y = self.up_convolution_1(torch.cat([down_7, up_0], 1))
         up_1 = self.up_transpose_1(y)
         y = self.up_convolution_2(torch.cat([down_5, up_1], 1))
         up_2 = self.up_transpose_2(y)
