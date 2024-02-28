@@ -127,7 +127,7 @@ class ViT(nn.Module):
         image_width = 101
         patch_height = 4
         patch_width = 101
-        print((patch_height, patch_width))
+        #print((patch_height, patch_width))
 
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
@@ -229,7 +229,7 @@ class CAE(nn.Module):
         encoded_tokens = self.encoder.transformer(tokens)
 
         down_features = self.down_flatten(encoded_tokens)
-        print(down_features.shape)
+        #print(down_features.shape)
         up_features = self.up_flatten(down_features)
 
 
