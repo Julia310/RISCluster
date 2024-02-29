@@ -105,7 +105,7 @@ def get_zarr_data(split_dataset=True):
     if split_dataset:
 
         # Determine the size of the training and test sets
-        train_size = int(0.8 * len(full_dataset))
+        train_size = int(0.85 * len(full_dataset))
         test_size = len(full_dataset) - train_size
 
         # Split the dataset into training and test sets
