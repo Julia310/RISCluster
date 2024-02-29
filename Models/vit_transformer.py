@@ -207,16 +207,16 @@ class CAE(nn.Module):
         # get patches
 
         patches = self.to_patch(img)
-        print(f'patch: {patches.shape}')
+        #print(f'patch: {patches.shape}')
         batch, num_patches, *_ = patches.shape
 
         # patch to encoder tokens and add positions
 
         tokens = self.emb(patches)
-        print(f'emb_ {tokens.shape}')
+        #print(f'emb_ {tokens.shape}')
 
         encoded_tokens = self.encoder.transformer(tokens)
-        print(f'encoded_tokens {encoded_tokens.shape}')
+        #print(f'encoded_tokens {encoded_tokens.shape}')
 
         down_features = self.down_flatten(encoded_tokens)
         up_features = self.up_flatten(down_features)
@@ -225,7 +225,7 @@ class CAE(nn.Module):
         ## project encoder to decoder dimensions, if they are not equal - the paper says you can get away with a smaller dimension for decoder
 #
         decoder_tokens = self.enc_to_dec(up_features)
-        print(f'decoder_tokens {decoder_tokens.shape}')
+        #print(f'decoder_tokens {decoder_tokens.shape}')
 
 #
         pred_pixel_values = self.lin_transformation(decoder_tokens)
@@ -245,4 +245,4 @@ mae = CAE(
 images = torch.randn(8, 1, 4, 101)
 
 loss = mae.forward(images)
-print(loss.shape)
+print(loss)
