@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
 from Models.networks import init_weights
-from Models.AEC_CBAM import AEC
+from Models.vit_transformer import CAE
 import torch.distributed as dist
 from time import time
 from torchvision import transforms
@@ -78,9 +78,9 @@ class Trainer:
         batch_size, mini_batch, channels, height, width = batch.size()
         batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
         self.optimizer.zero_grad()
-        output = self.model(batch)
+        loss = self.model(batch)
         #loss = F.mse_loss(output, batch)
-        loss = self.metrics[0](output, batch)
+        #loss = self.metrics[0](output, batch)
         if loss.requires_grad:  # Check if loss requires gradients
             loss.backward()
             self.optimizer.step()

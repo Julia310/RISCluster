@@ -29,7 +29,7 @@ class FeedForward(nn.Module):
 class Attention(nn.Module):
     def __init__(self, dim, heads = 8, dim_head = 64, dropout = 0.):
         super().__init__()
-        inner_dim = dim_head *  heads
+        inner_dim = dim_head * heads
         project_out = not (heads == 1 and dim_head == dim)
 
         self.heads = heads
@@ -125,21 +125,11 @@ class ViT(nn.Module):
         super().__init__()
         image_height = 4
         image_width = 101
-        patch_height = 4
-        patch_width = 101
-        #print((patch_height, patch_width))
 
-
-        assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
-
-        num_patches = (image_height // patch_height) * (image_width // patch_width)
-        patch_dim = channels * patch_height * patch_width
-        assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
-
-        self.to_patch_embedding = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = patch_height, p2 = patch_width),
-            nn.LayerNorm(patch_dim),
-            nn.Linear(patch_dim, dim),
+        self.to_embedding = nn.Sequential(
+            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = image_height, p2 = image_width),
+            nn.LayerNorm(channels * image_height * image_width),
+            nn.Linear(channels * image_height * image_width, dim),
             nn.LayerNorm(dim),
         )
 
@@ -156,14 +146,12 @@ class ViT(nn.Module):
 
 
     def forward(self, img):
-        #print(img.shape)
 
-        x = self.to_patch_embedding(img)
+        x = self.to_embedding(img)
         b, n, _ = x.shape
 
         cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b = b)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
         x = self.dropout(x)
 
         x = self.transformer(x)
@@ -178,9 +166,8 @@ class CAE(nn.Module):
     def __init__(
             self,
             *,
-            encoder,
-            decoder_dim,
-            decoder_depth=1,
+            decoder_dim = 128,
+            decoder_depth=8,
             decoder_heads=8,
             decoder_dim_head=64
     ):
@@ -188,13 +175,19 @@ class CAE(nn.Module):
 
         # extract some hyperparameters and functions from encoder (vision transformer to be trained)
 
-        self.encoder = encoder
+        self.encoder = ViT(
+            num_classes = 1000,
+            dim = 1024,
+            depth = 6,
+            heads = 8,
+            mlp_dim = 2048
+        )
         #num_patches, encoder_dim = encoder.pos_embedding.shape[-2:]
 
-        self.to_patch = encoder.to_patch_embedding[0]
-        self.patch_to_emb = nn.Sequential(*encoder.to_patch_embedding[1:])
+        self.to_patch = self.encoder.to_embedding[0]
+        self.emb = nn.Sequential(*self.encoder.to_embedding[1:])
 
-        pixel_values_per_patch = encoder.to_patch_embedding[2].weight.shape[-1]
+        pixel_values_per_patch = self.encoder.to_embedding[2].weight.shape[-1]
 
         # decoder parameters
         self.decoder_dim = decoder_dim
@@ -205,41 +198,38 @@ class CAE(nn.Module):
         self.decoder = Transformer(dim=decoder_dim, depth=decoder_depth, heads=decoder_heads, dim_head=decoder_dim_head,
                                    mlp_dim=decoder_dim * 4)
         #self.decoder_pos_emb = nn.Embedding(num_patches, decoder_dim)
-        self.to_pixels = nn.Linear(decoder_dim, pixel_values_per_patch)
+        self.lin_transformation = nn.Linear(decoder_dim, pixel_values_per_patch)
         self.down_flatten = down_linear(1024)
         self.up_flatten = up_linear(1024)
 
 
     def forward(self, img):
-        device = img.device
-
         # get patches
 
         patches = self.to_patch(img)
+        print(f'patch: {patches.shape}')
         batch, num_patches, *_ = patches.shape
 
         # patch to encoder tokens and add positions
 
-        tokens = self.patch_to_emb(patches)
-        #if self.encoder.pool == "cls":
-        #    tokens += self.encoder.pos_embedding[:, 1:(num_patches + 1)]
-        #elif self.encoder.pool == "mean":
-        #    tokens += self.encoder.pos_embedding.to(device, dtype=tokens.dtype)
-
-        # attend with vision transformer
+        tokens = self.emb(patches)
+        print(f'emb_ {tokens.shape}')
 
         encoded_tokens = self.encoder.transformer(tokens)
-        #print(encoded_tokens.shape)
+        print(f'encoded_tokens {encoded_tokens.shape}')
+
         down_features = self.down_flatten(encoded_tokens)
-        #print(down_features.shape)
         up_features = self.up_flatten(down_features)
 #
 #
         ## project encoder to decoder dimensions, if they are not equal - the paper says you can get away with a smaller dimension for decoder
 #
         decoder_tokens = self.enc_to_dec(up_features)
+        print(f'decoder_tokens {decoder_tokens.shape}')
+
 #
-        pred_pixel_values = self.to_pixels(decoder_tokens)
+        pred_pixel_values = self.lin_transformation(decoder_tokens)
+
 #
         ## calculate reconstruction loss
 #
@@ -247,16 +237,7 @@ class CAE(nn.Module):
         return recon_loss
 
 
-v = ViT(
-    num_classes = 1000,
-    dim = 1024,
-    depth = 6,
-    heads = 8,
-    mlp_dim = 2048
-)
-
 mae = CAE(
-    encoder = v,
     decoder_dim = 128,      # paper showed good results with just 512
     decoder_depth = 6       # anywhere from 1 to 8
 )
@@ -264,3 +245,4 @@ mae = CAE(
 images = torch.randn(8, 1, 4, 101)
 
 loss = mae.forward(images)
+print(loss.shape)
