@@ -58,17 +58,17 @@ class ZarrDataset(Dataset):
 
         # Assuming each sample is non-overlapping for simplicity
         #self.num_samples = self.ds.dims['time'] // sample_size * self.ds.dims['channel']
-        self.num_samples = (self.ds.shape[0] // 11 * 2) // self.chunk_size * ((self.ds.shape[1] - 1600) // 5)
+        self.num_samples = (self.ds.shape[0] // 11 * 1) // self.chunk_size * ((self.ds.shape[1] - 1600) // 5)
         self.spectrogram_size = 4
 
     def __len__(self):
         return self.num_samples
 
     def __getitem__(self, idx):
-        start_time = (idx * self.chunk_size) % (self.ds.shape[0] // 11 * 2)
+        start_time = (idx * self.chunk_size) % (self.ds.shape[0] // 11 * 1) + 1036440
         end_time = start_time + self.chunk_size
 
-        channel = (idx * self.chunk_size) // (self.ds.shape[0] // 11 * 2) * 5 + 1600
+        channel = (idx * self.chunk_size) // (self.ds.shape[0] // 11 * 1) * 5 + 1600
 
         # Load the entire chunk
         chunk = torch.from_numpy(self.ds[start_time:end_time, channel, :].compute()).double()
@@ -105,7 +105,7 @@ def get_zarr_data(split_dataset=True):
     if split_dataset:
 
         # Determine the size of the training and test sets
-        train_size = int(0.7 * len(full_dataset))
+        train_size = int(0.8 * len(full_dataset))
         test_size = len(full_dataset) - train_size
 
         # Split the dataset into training and test sets
