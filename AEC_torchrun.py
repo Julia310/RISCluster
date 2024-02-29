@@ -78,9 +78,9 @@ class Trainer:
         batch_size, mini_batch, channels, height, width = batch.size()
         batch = batch.view(batch_size * mini_batch, channels, height, width).to(self.gpu_id)
         self.optimizer.zero_grad()
-        loss = self.model(batch)
+        output = self.model(batch)
         #loss = F.mse_loss(output, batch)
-        #loss = self.metrics[0](output, batch)
+        loss = self.metrics[0](output, batch)
         if loss.requires_grad:  # Check if loss requires gradients
             loss.backward()
             self.optimizer.step()
