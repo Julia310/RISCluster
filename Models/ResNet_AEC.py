@@ -224,6 +224,6 @@ class AEC(nn.Module):
         return up_8
 
 
-from torchinfo import summary
+#from torchinfo import summary
 
-summary(AEC(), (1, 1, 4, 101))
+#summary(AEC(), (1, 1, 4, 101))
