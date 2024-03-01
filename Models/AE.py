@@ -10,31 +10,25 @@ from torch import nn
 
 
 class EmbeddingToImage(nn.Module):
-    def __init__(self, embed_dim, channels, image_height, image_width):
+    def __init__(self, embed_dim=1024, channels=1, image_height=4, image_width=101):
         super().__init__()
+        self.channels = channels
+        self.image_height = image_height
+        self.image_width = image_width
+        self.batch_size = 0
         # Reverse of dimensionality reduction: project embeddings back to the original flattened image size
-        self.project_to_image = nn.Linear(embed_dim, channels * image_height * image_width)
+        self.project_to_image = nn.Sequential(
+            nn.Linear(embed_dim, channels * image_height * image_width),
+            nn.Sigmoid()
+        )
         # Reshape the flat vector back to the original image dimensions
-        self.unflatten = nn.Unflatten(1, (channels, image_height, image_width))
 
     def forward(self, x):
         x = self.project_to_image(x)  # Project embeddings to flat image vector
-        x = self.unflatten(x)  # Reshape to original image dimensions
+        x = x.view(-1, self.channels, self.image_height, self.image_width)  # -1 infers the batch size
         return x
 
 
-class ImageToEmbedding(nn.Module):
-    def __init__(self, channels, image_height, image_width, embed_dim):
-        super().__init__()
-        self.flatten = nn.Flatten(start_dim=1)  # Flatten images to vectors
-        self.linear = nn.Linear(channels * image_height * image_width, embed_dim)  # Dimensionality reduction
-        self.norm = nn.LayerNorm(embed_dim)  # Normalize the embeddings
-
-    def forward(self, x):
-        x = self.flatten(x)  # Flatten the image from [B, C, H, W] to [B, C*H*W]
-        x = self.linear(x)  # Reduce dimensionality to 'embed_dim'
-        x = self.norm(x)  # Apply layer normalization
-        return x
 
 
 def down_linear(in_features):
@@ -75,7 +69,8 @@ class FeedForward(nn.Module):
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, dim),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
+            nn.ReLU()
         )
 
     def forward(self, x):
@@ -107,6 +102,8 @@ class AE(nn.Module):
         self.layer12 = FeedForward(dim)
         self.down_flatten = down_linear(1024)
         self.up_flatten = up_linear(1024)
+        # Reverse of dimensionality reduction: project embeddings back to the original flattened image size
+        self.project_to_image = EmbeddingToImage()
 
     def forward(self, x):
         x = self.flatten(x)
@@ -125,6 +122,8 @@ class AE(nn.Module):
         x = self.layer10(x)
         x = self.layer11(x)
         x = self.layer12(x)
+        x = self.project_to_image(x)
+        return x
 
 
 
