@@ -130,6 +130,7 @@ class AE(nn.Module):
         x = self.layer11(x)
         x = self.layer12(x)
         x = self.resize(x)
+        return x
 
 
 
