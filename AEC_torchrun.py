@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
 from Models.networks import init_weights
-from Models.ResNet_AEC import AEC
+from Models.AE import AE
 import torch.distributed as dist
 from time import time
 from torchvision import transforms
@@ -183,7 +183,7 @@ def load_train_objs():
     # Split the dataset into training and test sets
     train_set, test_set = random_split(full_dataset, [train_size, test_size])
 
-    model = AEC()
+    model = AE()
     model.apply(init_weights)
     model = model.double()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
