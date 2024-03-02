@@ -131,6 +131,6 @@ class AE(nn.Module):
 
 
 #images = torch.randn(8, 1, 4, 101)
-from torchinfo import summary
+#from torchinfo import summary
 
-summary(AE(), (8, 1, 4, 101))
+#summary(AE(), (8, 1, 4, 101))
