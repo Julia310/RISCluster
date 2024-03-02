@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
 from Models.networks import init_weights
-from Models.AE import AE
+from Models.Res_AE import AE
 import torch.distributed as dist
 from time import time
 from torchvision import transforms
