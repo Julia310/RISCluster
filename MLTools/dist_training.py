@@ -86,7 +86,7 @@ class Trainer:
                 targets = inputs  # For reconstruction tasks, inputs are used as targets
             start_time = time()
             with torch.set_grad_enabled(True):
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
+                inputs, targets = inputs.to(self.gpu_id), targets.to(self.gpu_id)
                 loss = self._run_batch(inputs, targets)
             running_loss += loss.item() * batch.size(0) * batch.size(1)
             running_size += batch.size(0) * batch.size(1)
