@@ -46,7 +46,7 @@ def main(save_every: int, total_epochs: int, batch_size: int, snapshot_path: str
     train_data = prepare_dataloader(train_set, batch_size, callback_fn = flatten_batch, num_workers=5)
     test_data = prepare_dataloader(test_set, batch_size, callback_fn = flatten_batch, num_workers=5)
 
-    trainer = Trainer(model, train_data, test_data, optimizer, save_every, snapshot_path)
+    trainer = Trainer(model, train_data, test_data, optimizer, save_every, snapshot_path, task_type='reconstruction')
     dist_train(trainer, total_epochs)
 
 

@@ -39,7 +39,8 @@ class Trainer:
             snapshot_path: str,
             early_stopping: bool = True,
             patience: int = 10,
-            metrics: list = None
+            metrics: list = None,
+            task_type: str = "supervised"
     ) -> None:
         self.gpu_id = int(os.environ["LOCAL_RANK"])
         self.model = model.to(self.gpu_id)
@@ -55,6 +56,7 @@ class Trainer:
         self.strikes = 0
         self.metrics = metrics if metrics is not None else [torch.nn.MSELoss(reduction='mean')]
         self.model = DDP(self.model, device_ids=[self.gpu_id], find_unused_parameters=True)
+        self.task_type = task_type
 
     def _load_snapshot(self, snapshot_path):
         loc = f"cuda:{self.gpu_id}"
@@ -72,14 +74,14 @@ class Trainer:
             loss.backward()
         return loss
 
-    def _run_epoch(self, epoch, task_type='supervised'):
+    def _run_epoch(self, epoch, ):
         running_loss = 0.0
         running_size = 0
         self.train_data.sampler.set_epoch(epoch)
         for batch in self.train_data:
-            if task_type == 'supervised':
+            if self.task_type == 'supervised':
                 inputs, targets = batch
-            elif task_type == 'reconstruction':
+            elif self.task_type == 'reconstruction':
                 inputs = batch
                 targets = inputs  # For reconstruction tasks, inputs are used as targets
             start_time = time()
