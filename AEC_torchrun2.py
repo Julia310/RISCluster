@@ -1,4 +1,4 @@
-from MLTools.dist_training import Trainer, dist_train, prepare_dataloader
+from MLTools.dist_training import Trainer, dist_train, prepare_dataloader, ddp_init
 import torch
 from torch.utils.data import Dataset, DataLoader
 from RISCluster.ZarrDataLoader import ZarrDataset
@@ -41,6 +41,7 @@ def load_train_objs():
     return train_set, test_set, model, optimizer
 
 def main(save_every: int, total_epochs: int, batch_size: int, snapshot_path: str = "snapshot.pt"):
+    ddp_init()
     train_set, test_set, model, optimizer = load_train_objs()
     train_data = prepare_dataloader(train_set, batch_size, callback_fn = flatten_batch, num_workers=5)
     test_data = prepare_dataloader(test_set, batch_size, callback_fn = flatten_batch, num_workers=5)

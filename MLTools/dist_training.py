@@ -11,7 +11,7 @@ import torch
 import os
 
 
-def ddp_setup():
+def ddp_init():
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
@@ -158,7 +158,6 @@ class Trainer:
 
 @record
 def dist_train(trainer, total_epochs):
-    ddp_setup()
     trainer.train(total_epochs)
     destroy_process_group()
 
