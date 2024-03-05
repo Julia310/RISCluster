@@ -28,18 +28,6 @@ def prepare_dataloader(dataset: Dataset, batch_size: int, callback_fn: Callable,
     )
 
 
-def flatten_batch(batch):
-    # Convert list of samples (batch) into a tensor
-    # Assuming each sample in the batch is a tensor of shape (mini_batch, channels, height, width)
-    batch_tensor = torch.stack(batch, dim=0)
-
-    # Flatten the batch and mini_batch dimensions
-    batch_size, mini_batch, channels, height, width = batch_tensor.size()
-    flattened_batch = batch_tensor.view(batch_size * mini_batch, channels, height, width)
-
-    return flattened_batch
-
-
 class Trainer:
     def __init__(
             self,

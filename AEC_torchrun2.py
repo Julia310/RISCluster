@@ -1,5 +1,16 @@
 from MLTools.dist_training import Trainer, dist_train, prepare_dataloader
 
+def flatten_batch(batch):
+    # Convert list of samples (batch) into a tensor
+    # Assuming each sample in the batch is a tensor of shape (mini_batch, channels, height, width)
+    batch_tensor = torch.stack(batch, dim=0)
+
+    # Flatten the batch and mini_batch dimensions
+    batch_size, mini_batch, channels, height, width = batch_tensor.size()
+    flattened_batch = batch_tensor.view(batch_size * mini_batch, channels, height, width)
+
+    return flattened_batch
+
 
 def load_train_objs():
     transform_pipeline = transforms.Compose([
@@ -21,8 +32,8 @@ def load_train_objs():
 
 def main(save_every: int, total_epochs: int, batch_size: int, snapshot_path: str = "snapshot.pt"):
     train_set, test_set, model, optimizer = load_train_objs()
-    train_data = prepare_dataloader(train_set, batch_size)
-    test_data = prepare_dataloader(test_set, batch_size)
+    train_data = prepare_dataloader(train_set, batch_size, callback_fn = flatten_batch, num_workers=5)
+    test_data = prepare_dataloader(test_set, batch_size, callback_fn = flatten_batch, num_workers=5)
 
     trainer = Trainer(model, train_data, test_data, optimizer, save_every, snapshot_path)
     dist_train(trainer, total_epochs)
