@@ -1,62 +1,78 @@
-# RISCluster
+# Clustering of Spectrogram Cubes
 
-RISCluster is a package that implements deep embedded clustering (DEC) and Gaussian mixture model (GMM) clustering of
-seismic data recorded on the Ross Ice Shelf, Antarctica from 2014-2017. This
-package is an accompaniment to the [paper published in the Journal of Geophysical Research: Solid Earth](https://doi.org/10.1029/2021JB021716).
+This project implements a clustering workflow inspired by the methodology described in the [paper](https://doi.org/10.1029/2021JB021716) published in the 
+Journal of Geophysical Research: Solid Earth.  The aim is to group spectrogram cubes in a meaningful way by leveraging 
+deep learning techniques, with applications in geophysical research.
 
-<p><img src="RISArrayMap.jpg"/>
-Figure 1.  34-station passive seismic array deployed on the Ross Ice Shelf, Antarctica from 2014-2017.
+***
+
+### Clustering Workflow
+To perform **Deep Embedded Clustering (DEC)**, the workflow follows these steps:
+1. **Pretraining an Autoencoder:** The autoencoder is trained to extract the most essential features from the spectrogram data samples, reducing dimensionality while retaining important information.
+2. **Gaussian Mixture Model (GMM) in Latent Space:** Once the data is encoded into the latent space by the autoencoder, a GMM is applied to identify and group clusters. This helps in discovering distinct patterns or classes within the data.
+3. **Cluster Assignment and Refinement:** The initial cluster assignments from the GMM are refined using DEC, further optimizing the clustering to improve separation and cohesiveness.
+
+<p align="center">
+    <img src="DEC.png" alt="Deep Embedded Clustering Workflow" width="60%"/>
+    <br>
+    Deep Embedded Clustering Approach.
 </p>
 
+
 ***
 
-### Installation
-Pre-requisites:
-[Anaconda](https://anaconda.org) or
-[Miniconda](https://docs.conda.io/en/latest/miniconda.html)
+### Pre-requisites
 
-The following steps will set up a Conda environment and install RISProcess, and
-have been tested on MacOS 11.1 and Red Hat Enterprise Linux 7.9. If you have
-a CUDA-enabled machine (i.e., not MacOS), you can install the CUDA version of
-RISCluster. Unfortunately, PyTorch GPU & RAPIDS libraries are not implemented
-for MacOS, so you will need to install the CPU version if you use a Mac, or if
-your Linux machine is not CUDA-capable. This package has not been tested on
-Windows.
+To set up the environment for running the code, follow these steps:
 
-#### CUDA-enabled RISCluster (Linux)
-1. Open a terminal and navigate to the directory you would like to download the
- **RISCluster_CUDA.yml** environment file.
-2. Save **RISCluster_CUDA.yml** to your computer by running the following:
-<br>`wget --no-check-certificate --content-disposition https://raw.githubusercontent.com/NeptuneProjects/RISCluster/master/RISCluster_CUDA.yml`
-3. In terminal, run: `conda env create -f RISCluster_CUDA.yml`
-4. Once the environment is set up and the package is installed, activate your
-environment by running `conda activate RISCluster_CUDA` in terminal.
-
-#### CPU-based RISCluster (Mac or Linux)
-1. Open a terminal and navigate to the directory you would like to download the
- **RISCluster_CPU.yml** environment file.
-2. Save **RISCluster_CPU.yml** to your computer by running the following:
-  <br>a. **Mac**:
-  <br>`curl -LJO https://raw.githubusercontent.com/NeptuneProjects/RISCluster/master/RISCluster_CPU.yml`
-  <br>b. **Linux**:
-  <br>`wget --no-check-certificate --content-disposition https://raw.githubusercontent.com/NeptuneProjects/RISCluster/master/RISCluster_CPU.yml`
-3. In terminal, run: `conda env create -f RISCluster_CPU.yml`
-4. Once the environment is set up and the package is installed, activate your
-environment by running `conda activate RISCluster_CPU` in terminal.
+1. Install [Anaconda](https://anaconda.org) if you haven't already.
+   
+2. Set up the environment:
+   - For a **CUDA environment** (for GPU acceleration):  
+     ```bash
+     conda env create -f RISCluster_CUDA.yml
+     ```
+   - For a **CPU-based environment**:  
+     ```bash
+     conda activate RISCluster_CPU
+     ```
 ***
-### Usage
-Please refer to the [RISWorkflow repository](https://github.com/NeptuneProjects/RISWorkflow) for detailed instructions on how to implement the workflow.
+
+### Execution
+
+To run the complete clustering workflow, follow these steps:
+
+1. **Train the Autoencoder**:  
+   Run the following command to pretrain the autoencoder:  
+   ```bash
+   python3 AEC_train.py
+   ```
+2. **Perform Deep Embedded Clustering**:  
+   To initialize the DEC process by generating centroids using GMM, execute:
+   ```bash
+   python3 GMM_centroids.py
+   ```
+3. **Train the Autoencoder**:  
+   Run this command to start the DEC process and refine the clusters:
+   ```bash
+   python3 DEC_train.py
+   ```
+
 ***
+
+### Note
+For performing distributed training switch to branch dev_ddp
+
+***
+
 ### References
 William F. Jenkins II, Peter Gerstoft, Michael J. Bianco, Peter D. Bromirski; *[Unsupervised Deep Clustering of Seismic Data: Monitoring the Ross Ice Shelf, Antarctica.](https://onlinelibrary.wiley.com/share/author/QI3MB3SGBPRGJISHRJGJ?target=10.1029/2021JB021716)* Journal of Geophysical Research: Solid Earth, 30 August 2021; doi: https://doi.org/10.1029/2021JB021716
 
 Dylan Snover, Christopher W. Johnson, Michael J. Bianco, Peter Gerstoft; *Deep Clustering to Identify Sources of Urban Seismic Noise in Long Beach, California.* Seismological Research Letters 2020; doi: https://doi.org/10.1785/0220200164
 
 Junyuan Xie, Ross Girshick, Ali Farhadi; *Unsupervised Deep Embedding for Clustering Analysis.* Proceedings of the 33rd International Conference on Machine Learning, New York, NY, 2016; https://arxiv.org/abs/1511.06335v2
+
+Please refer to the [RISWorkflow repository](https://github.com/NeptuneProjects/RISWorkflow) for detailed instructions on how to implement the workflow.
+
 ***
-### Author
-Project assembled by William Jenkins
-<br>wjenkins [@] ucsd [dot] edu
-<br>Scripps Institution of Oceanography
-<br>University of California San Diego
-<br>La Jolla, California, USA
+
