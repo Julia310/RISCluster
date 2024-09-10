@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
-from RISCluster.ZarrDataLoader import ZarrDataset
+from ZarrDataLoader import ZarrDataset
 from Models.networks import init_weights
 from Models.ResNet_AEC import AEC
 import torch.distributed as dist

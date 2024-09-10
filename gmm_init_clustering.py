@@ -1,5 +1,5 @@
 from sklearn.mixture import GaussianMixture
-from RISCluster.ZarrDataLoader import ZarrDataset
+from ZarrDataLoader import ZarrDataset
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
