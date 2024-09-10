@@ -1,6 +1,0 @@
-name = "RISCluster"
-__version__ = "0.3"
-__description__ = "RISCluster - Unsupervised Icequake/Earthquake Clustering"
-__license__ = "MIT"
-__author__ = "William F. Jenkins II"
-__email__ = "wjenkins [..at..] ucsd [..dot..] edu"
