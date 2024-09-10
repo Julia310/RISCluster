@@ -25,21 +25,6 @@ class EmbeddingToImage(nn.Module):
         x = x.view(-1, self.channels, self.image_height, self.image_width)
         return x
 
-
-class ImageToEmbedding(nn.Module):
-    def __init__(self, channels, image_height, image_width, embed_dim):
-        super().__init__()
-        self.flatten = nn.Flatten(start_dim=1)  # Flatten images to vectors
-        self.linear = nn.Linear(channels * image_height * image_width, embed_dim)  # Dimensionality reduction
-        self.norm = nn.LayerNorm(embed_dim)  # Normalize the embeddings
-
-    def forward(self, x):
-        x = self.flatten(x)  # Flatten the image from [B, C, H, W] to [B, C*H*W]
-        x = self.linear(x)  # Reduce dimensionality to 'embed_dim'
-        x = self.norm(x)  # Apply layer normalization
-        return x
-
-
 def down_linear(in_features):
     conv_op = nn.Sequential(
         nn.Flatten(),
