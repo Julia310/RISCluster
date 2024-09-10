@@ -47,16 +47,17 @@ To run the complete clustering workflow, follow these steps:
    ```bash
    python3 AEC_train.py
    ```
-2. **Perform Deep Embedded Clustering**:  
+2. **Initialize DEC with GMM Centroids**:  
    To initialize the DEC process by generating centroids using GMM, execute:
    ```bash
    python3 GMM_centroids.py
    ```
-3. **Train the Autoencoder**:  
+3. **Perform Deep Embedded Clustering**:  
    Run this command to start the DEC process and refine the clusters:
    ```bash
    python3 DEC_train.py
    ```
+
 
 ***
 
