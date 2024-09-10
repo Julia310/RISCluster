@@ -13,8 +13,9 @@ To perform **Deep Embedded Clustering (DEC)**, the workflow follows these steps:
 3. **Cluster Assignment and Refinement:** The initial cluster assignments from the GMM are refined using DEC, further optimizing the clustering to improve separation and cohesiveness.
 
 <p align="center">
-    <img src="DEC.png" alt="Deep Embedded Clustering Approach." width="60%"/>
+    <img src="DEC.png" alt="Deep Embedded Clustering Workflow" width="60%"/>
     <br>
+    Deep Embedded Clustering Approach.
 </p>
 
 
@@ -26,11 +27,11 @@ To set up the environment for running the code, follow these steps:
 
 1. Install [Anaconda](https://anaconda.org) if you haven't already.
    
-2. Set up the environment:
-   - For a **CUDA environment** (for GPU acceleration):  
+2. Set up the GPU environment:
      ```bash
      conda env create -f RISCluster_CUDA.yml
      ```
+
 ***
 
 ### Execution
@@ -38,27 +39,21 @@ To set up the environment for running the code, follow these steps:
 To run the complete clustering workflow, follow these steps:
 
 1. **Train the Autoencoder**:  
-   Run the following command to pretrain the autoencoder:  
+   Run the following command to pretrain the autoencoder leveraging DistributedDataParallel (DDP):  
    ```bash
-   python3 AEC_train.py
+   torchrun --standalone --nproc_per_node=<number of GPUs> AEC_torchrun2.py <epochs> <save weights frequency>
    ```
-2. **Perform Deep Embedded Clustering**:  
+2. **Initialize DEC with GMM Centroids**:  
    To initialize the DEC process by generating centroids using GMM, execute:
    ```bash
-   python3 GMM_centroids.py
+   python3 gmm_init_clustering.py
    ```
-3. **Train the Autoencoder**:  
-   Run this command to start the DEC process and refine the clusters:
-   ```bash
-   python3 DEC_train.py
-   ```
+3. **Perform Deep Embedded Clustering**:  
+   **ToDo**: Implement DEC utilizing DDP
 
 ***
 
-### Note
-For performing distributed training switch to branch dev_ddp
 
-***
 
 ### References
 William F. Jenkins II, Peter Gerstoft, Michael J. Bianco, Peter D. Bromirski; *[Unsupervised Deep Clustering of Seismic Data: Monitoring the Ross Ice Shelf, Antarctica.](https://onlinelibrary.wiley.com/share/author/QI3MB3SGBPRGJISHRJGJ?target=10.1029/2021JB021716)* Journal of Geophysical Research: Solid Earth, 30 August 2021; doi: https://doi.org/10.1029/2021JB021716
